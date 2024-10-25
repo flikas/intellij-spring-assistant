@@ -1,7 +1,6 @@
-package dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.platform;
+package dev.flikas.spring.boot.assistant.idea.plugin.metadata.source;
 
 import com.intellij.util.io.KeyDescriptor;
-import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.PropertyName;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;

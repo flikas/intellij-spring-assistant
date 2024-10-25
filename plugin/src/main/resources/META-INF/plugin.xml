@@ -86,6 +86,8 @@
        "implementation" class specifies the name of the class
        added to the extension point. -->
   <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex
+        implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataPropertyIndex"/>
     <!--suppress PluginXmlValidity -->
     <postStartupActivity
         implementation="in.oneton.idea.spring.assistant.plugin.suggestion.component.BootstrapImpl"/>

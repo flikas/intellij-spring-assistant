@@ -121,7 +121,7 @@ final class ProjectMetadataService implements Disposable {
           AggregatedMetadataIndex index = new AggregatedMetadataIndex(generateIndex(metaFile));
           // Spring does not create metadata for types in collections, we should create it by ourselves and expand our index,
           // to better support code-completion, documentation, navigation, etc.
-          for (MetadataProperty property : index.getProperties()) {
+          for (MetadataProperty property : index.getProperties().values()) {
             resolvePropertyType(property).ifPresent(index::addFirst);
           }
           this.metadataFile = metaFile;
