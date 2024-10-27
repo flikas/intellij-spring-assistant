@@ -169,6 +169,9 @@ class PropertyNameTest {
 
   @Test
   void testEquals() {
+    assertNotEquals(PropertyName.of("spring.kafka.admin.ssl.key-store-location"),
+        PropertyName.of("spring.kafka.admin.ssl.keystore-location"));
+
     assertEquals(PropertyName.of("spring.instance[2].name"), PropertyName.of("spring.instance[#].name"));
     assertEquals(PropertyName.of("spring.instance[#].name"), PropertyName.of("spring.instance[15].name"));
     assertEquals(PropertyName.of("spring.instance[*].name"), PropertyName.of("spring.instance[spring.tomcat].name"));
@@ -179,6 +182,7 @@ class PropertyNameTest {
     assertNotEquals(PropertyName.of("spring.instance[#].name"), PropertyName.of("spring.instance[*].name"));
     assertNotEquals(PropertyName.of("spring.instance[*].name"), PropertyName.of("spring.instance[1].name"));
     assertNotEquals(PropertyName.of("spring.instance[#].name"), PropertyName.of("spring.instance[a].name"));
+
   }
 
 

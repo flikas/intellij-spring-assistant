@@ -24,6 +24,11 @@ public class MyProperties {
     private String p1;
 
     /**
+     *  Ù–‘1
+     */
+    private String keyStore;
+
+    /**
      * Jobs
      */
     private HashMap<String, Job> jobs;

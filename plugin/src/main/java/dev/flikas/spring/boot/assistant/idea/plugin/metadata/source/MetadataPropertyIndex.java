@@ -1,6 +1,7 @@
 package dev.flikas.spring.boot.assistant.idea.plugin.metadata.source;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -23,12 +24,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class MetadataPropertyIndex extends FileBasedIndexExtension<PropertyName, ConfigurationMetadata.Property> {
+public class MetadataPropertyIndex extends FileBasedIndexExtension<PropertyName, AlloProperties> {
   public static final String METADATA_FILE_NAME = "spring-configuration-metadata.json";
   public static final String METADATA_FILE = "META-INF/" + METADATA_FILE_NAME;
   public static final String ADDITIONAL_METADATA_FILE_NAME = "additional-spring-configuration-metadata.json";
   public static final String ADDITIONAL_METADATA_FILE = "META-INF/" + ADDITIONAL_METADATA_FILE_NAME;
-  public static final ID<PropertyName, ConfigurationMetadata.Property> NAME = ID.create(
+  public static final ID<PropertyName, AlloProperties> NAME = ID.create(
       MetadataPropertyIndex.class.getCanonicalName());
 
   private static final Logger LOG = Logger.getInstance(MetadataPropertyIndex.class);
@@ -37,14 +38,15 @@ public class MetadataPropertyIndex extends FileBasedIndexExtension<PropertyName,
 
 
   @Override
-  public @NotNull ID<PropertyName, ConfigurationMetadata.Property> getName() {
+  public @NotNull ID<PropertyName, AlloProperties> getName() {
     return NAME;
   }
 
 
   @Override
   public int getVersion() {
-    return 0;
+    //FIXME Force index rebuild, FOR TEST ONLY!
+    return (int) System.currentTimeMillis();
   }
 
 
@@ -55,10 +57,10 @@ public class MetadataPropertyIndex extends FileBasedIndexExtension<PropertyName,
 
 
   @Override
-  public @NotNull DataIndexer<PropertyName, ConfigurationMetadata.Property, FileContent> getIndexer() {
+  public @NotNull DataIndexer<PropertyName, AlloProperties, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      public @NotNull Map<PropertyName, ConfigurationMetadata.Property> map(@NotNull FileContent inputData) {
+      public @NotNull Map<PropertyName, AlloProperties> map(@NotNull FileContent inputData) {
         VirtualFile file = inputData.getFile();
         if (file.isInLocalFileSystem()) {
           Project project = inputData.getProject();
@@ -74,7 +76,10 @@ public class MetadataPropertyIndex extends FileBasedIndexExtension<PropertyName,
         ConfigurationMetadata meta = gson.get()
             .fromJson(inputData.getContentAsText().toString(), ConfigurationMetadata.class);
         LOG.info("Indexed file " + file.getPath() + " loaded " + meta.getProperties().size() + " properties");
-        return meta.getProperties().stream().collect(Collectors.toMap(p -> PropertyName.adapt(p.getName()), p -> p));
+        return meta.getProperties().stream().collect(Collectors.toMap(
+            p -> PropertyName.adapt(p.getName()),
+            p -> new AlloProperties(file, p),
+            (p1, p2) -> p1.merge(file, p2)));
       }
     };
   }
@@ -87,17 +92,17 @@ public class MetadataPropertyIndex extends FileBasedIndexExtension<PropertyName,
 
 
   @Override
-  public @NotNull DataExternalizer<ConfigurationMetadata.Property> getValueExternalizer() {
+  public @NotNull DataExternalizer<AlloProperties> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull DataOutput out, ConfigurationMetadata.Property value) throws IOException {
+      public void save(@NotNull DataOutput out, AlloProperties value) throws IOException {
         IOUtil.writeUTF(out, gson.get().toJson(value));
       }
 
 
       @Override
-      public ConfigurationMetadata.Property read(@NotNull DataInput in) throws IOException {
-        return gson.get().fromJson(IOUtil.readUTF(in), ConfigurationMetadata.Property.class);
+      public AlloProperties read(@NotNull DataInput in) throws IOException {
+        return gson.get().fromJson(IOUtil.readUTF(in), TypeToken.get(AlloProperties.class));
       }
     };
   }
@@ -107,7 +112,6 @@ public class MetadataPropertyIndex extends FileBasedIndexExtension<PropertyName,
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return file -> {
       if (!file.getName().equals(METADATA_FILE_NAME) && !file.getName().equals(ADDITIONAL_METADATA_FILE)) return false;
-      
       if (file.isInLocalFileSystem()) {
         String path = file.getPath();
         return path.endsWith(METADATA_FILE) || path.endsWith(ADDITIONAL_METADATA_FILE);

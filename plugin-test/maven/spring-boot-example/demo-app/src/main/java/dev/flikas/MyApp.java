@@ -18,8 +18,7 @@ import java.nio.charset.Charset;
 @SpringBootApplication
 public class MyApp implements ApplicationRunner {
 
-    @Autowired
-    private JpaProperties jpaProperties;
+    @Autowired private MyProperties properties;
 
     public static void main(String[] args) {
         SpringApplication.run(MyApp.class);
@@ -43,6 +42,6 @@ public class MyApp implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        System.out.println(jpaProperties.getProperties());
+        System.out.println(properties.getKeyStore());
     }
 }
