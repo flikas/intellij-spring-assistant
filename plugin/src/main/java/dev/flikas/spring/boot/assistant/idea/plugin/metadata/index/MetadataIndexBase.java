@@ -31,10 +31,10 @@ import static dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.Confi
 
 
 abstract class MetadataIndexBase implements MetadataIndex {
-  private static final Logger log = Logger.getInstance(MetadataIndexBase.class);
+  private static final Logger LOG = Logger.getInstance(MetadataIndexBase.class);
 
   protected final Map<PropertyName, Group> groups = new HashMap<>();
-  protected final Map<PropertyName, Property> properties = new HashMap<>();
+  protected final Map<PropertyName, MetadataProperty> properties = new HashMap<>();
   protected final Map<PropertyName, Hint> hints = new HashMap<>();
   protected final Project project;
 
@@ -81,7 +81,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
   @Override
   public MetadataProperty getNearestParentProperty(String name) {
     PropertyName key = PropertyName.adapt(name);
-    Property property = null;
+    MetadataProperty property = null;
     while (key != null && !key.isEmpty() && (property = properties.get(key)) == null) {
       key = key.getParent();
     }
@@ -119,17 +119,36 @@ abstract class MetadataIndexBase implements MetadataIndex {
 
 
   protected void add(ConfigurationMetadata.Property p) {
-    this.properties.put(PropertyName.of(p.getName()), new Property(p));
+    Property prop = new Property(p);
+    PropertyName key = PropertyName.of(p.getName());
+    MetadataProperty old = this.properties.put(key, prop);
+    if (old != null) {
+      if (old instanceof AlloProperties allo) {
+        allo.add(getSource(), prop);
+      } else {
+        if (!old.getMetadata().equals(p)) {
+          AlloProperties allo = new AlloProperties(getSource(), old);
+          allo.add(getSource(), prop);
+          this.properties.put(key, allo);
+        }
+      }
+    }
   }
 
 
   protected void add(ConfigurationMetadata.Group g) {
-    this.groups.put(PropertyName.of(g.getName()), new Group(g));
+    Group old = this.groups.put(PropertyName.of(g.getName()), new Group(g));
+    if (old != null && !old.getMetadata().equals(g)) {
+      LOG.warn("Duplicate group " + g.getName() + " & " + old.getMetadata().getName());
+    }
   }
 
 
   protected void add(ConfigurationMetadata.Hint h) {
-    this.hints.put(PropertyName.of(h.getName()), new Hint(h));
+    Hint old = this.hints.put(PropertyName.of(h.getName()), new Hint(h));
+    if (old != null && !old.getMetadata().equals(h)) {
+      LOG.warn("Duplicate hint " + h.getName() + " & " + old.getMetadata().getName());
+    }
   }
 
 
@@ -141,7 +160,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
         try {
           add(g);
         } catch (Exception e) {
-          log.warn("Invalid group " + g.getName() + " in " + source + ", skipped", e);
+          LOG.warn("Invalid group " + g.getName() + " in " + source + ", skipped", e);
         }
       });
     }
@@ -150,7 +169,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
         try {
           add(h);
         } catch (Exception e) {
-          log.warn("Invalid hint " + h.getName() + " in " + source + ", skipped", e);
+          LOG.warn("Invalid hint " + h.getName() + " in " + source + ", skipped", e);
         }
       });
     }
@@ -158,7 +177,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
       try {
         add(p);
       } catch (Exception e) {
-        log.warn("Invalid property " + p.getName() + " in " + source + ", skipped", e);
+        LOG.warn("Invalid property " + p.getName() + " in " + source + ", skipped", e);
       }
     });
   }
