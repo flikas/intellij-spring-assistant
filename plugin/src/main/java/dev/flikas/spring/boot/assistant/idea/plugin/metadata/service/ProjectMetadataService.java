@@ -64,7 +64,7 @@ final class ProjectMetadataService implements Disposable {
     this.project = project;
     this.emptyIndex = MetadataIndex.empty(this.project);
     VirtualFileManager.getInstance().addAsyncFileListener(new FileWatcher(), this);
-    project.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED, new ModuleMetadataWatcher(project));
+    project.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED, new ModuleDependenciesWatcher(project));
   }
 
 

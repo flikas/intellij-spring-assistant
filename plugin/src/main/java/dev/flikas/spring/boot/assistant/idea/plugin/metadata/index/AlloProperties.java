@@ -31,20 +31,16 @@ public class AlloProperties extends AbstractMap<String, MetadataProperty> implem
   public void add(@NotNull String source, MetadataProperty property) {
     MetadataProperty current = items.putIfAbsent(property.getName(), property);
     if (current != null && !current.equals(property)) {
-      LOG.warn("Duplicate property '" + property.getName() + "' in file " + source + ", ignored");
-    } else {
+      LOG.warn("Duplicate property " + property.getName() + " in " + source + ", ignored");
+    } else if (current == null) {
       if (this.mainProperty == null) {
-        this.mainProperty = items.get(property.getName());
-      } else if (this.mainProperty.getMetadata().getDeprecation() != null) {
-        if (property.getMetadata().getDeprecation() == null) {
-          this.mainProperty = items.get(property.getName());
-        } else {
-          LOG.warn("Duplicate property '" + property.getName() + "' & '"
-              + this.mainProperty.getName() + "' in file " + source + ", ignored");
-        }
+        this.mainProperty = property;
+      } else if (this.mainProperty.getMetadata().getDeprecation() != null
+          && property.getMetadata().getDeprecation() == null) {
+        this.mainProperty = property;
       } else if (property.getMetadata().getDeprecation() == null) {
         LOG.warn("Duplicate property '" + property.getName() + "' & '"
-            + this.mainProperty.getName() + "' in file " + source + ", ignored");
+            + this.mainProperty.getName() + "' in " + source + ", ignored");
       }
     }
   }

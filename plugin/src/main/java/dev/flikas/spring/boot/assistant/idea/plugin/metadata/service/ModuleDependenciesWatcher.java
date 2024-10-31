@@ -18,11 +18,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class ModuleMetadataWatcher implements WorkspaceModelChangeListener {
+class ModuleDependenciesWatcher implements WorkspaceModelChangeListener {
   private final Project project;
 
 
-  public ModuleMetadataWatcher(Project project) {
+  public ModuleDependenciesWatcher(Project project) {
     this.project = project;
   }
 

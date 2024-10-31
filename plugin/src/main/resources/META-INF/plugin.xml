@@ -72,7 +72,7 @@
 
   <projectListeners>
     <listener
-        class="dev.flikas.spring.boot.assistant.idea.plugin.metadata.service.ModuleMetadataWatcher"
+        class="dev.flikas.spring.boot.assistant.idea.plugin.metadata.service.ModuleDependenciesWatcher"
         topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 

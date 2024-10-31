@@ -139,7 +139,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
   protected void add(ConfigurationMetadata.Group g) {
     Group old = this.groups.put(PropertyName.of(g.getName()), new Group(g));
     if (old != null && !old.getMetadata().equals(g)) {
-      LOG.warn("Duplicate group " + g.getName() + " & " + old.getMetadata().getName());
+      LOG.warn("Duplicate group " + g.getName() + " in " + getSource() + ", ignored");
     }
   }
 
@@ -147,7 +147,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
   protected void add(ConfigurationMetadata.Hint h) {
     Hint old = this.hints.put(PropertyName.of(h.getName()), new Hint(h));
     if (old != null && !old.getMetadata().equals(h)) {
-      LOG.warn("Duplicate hint " + h.getName() + " & " + old.getMetadata().getName());
+      LOG.warn("Duplicate hint " + h.getName() + " in " + getSource() + ", ignored");
     }
   }
 
