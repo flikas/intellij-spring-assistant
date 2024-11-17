@@ -2,7 +2,6 @@ package dev.flikas.spring.boot.assistant.idea.plugin.metadata.service;
 
 import com.google.gson.Gson;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,12 +12,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.util.indexing.FileBasedIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.AggregatedMetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.ConfigurationMetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataIndex;
@@ -56,7 +55,7 @@ final class ProjectMetadataService implements Disposable {
   private final Logger log = Logger.getInstance(ProjectMetadataService.class);
   private final ThreadLocal<Gson> gson = ThreadLocal.withInitial(Gson::new);
   private final Project project;
-  private final ConcurrentMap<String, MetadataFileRoot> metadataFiles = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, IndexFromOneFile> metadataFiles = new ConcurrentHashMap<>();
   @Getter private final MetadataIndex emptyIndex;
 
 
@@ -73,29 +72,33 @@ final class ProjectMetadataService implements Disposable {
   }
 
 
-  @Override
-  public void dispose() {
-    // This is a parent disposable for this plugin.
+  public MutableReference<MetadataIndex> getIndexForMetaFile(@NotNull VirtualFile metadataFile) {
+    return metadataFiles.computeIfAbsent(metadataFile.getUrl(), url -> new IndexFromOneFile(metadataFile));
   }
 
 
-  private Optional<MetadataFileRoot> tryGetMeta(@NotNull VirtualFile classRoot) {
+  @Override
+  public void dispose() {
+    // This is a parent disposable for FileWatcher.
+  }
+
+
+  private Optional<IndexFromOneFile> tryGetMeta(@NotNull VirtualFile classRoot) {
     return Optional.ofNullable(metadataFiles.computeIfAbsent(classRoot.getUrl(), url -> {
-      MetadataFileRoot mfr = new MetadataFileRoot(classRoot);
+      IndexFromOneFile mfr = new IndexFromOneFile(classRoot);
       return mfr.metadata != null ? mfr : null;
     }));
   }
 
 
-  private class MetadataFileRoot implements MutableReference<MetadataIndex> {
-    private final VirtualFile root;
-    private VirtualFile metadataFile;
+  private class IndexFromOneFile implements MutableReference<MetadataIndex> {
+    @NotNull private final VirtualFile metadataFile;
     private long lastMetadataModificationStamp = -1;
     private MetadataIndex metadata;
 
 
-    private MetadataFileRoot(VirtualFile root) {
-      this.root = root;
+    private IndexFromOneFile(@NotNull VirtualFile metadataFile) {
+      this.metadataFile = metadataFile;
       reload();
     }
 
@@ -108,72 +111,45 @@ final class ProjectMetadataService implements Disposable {
 
 
     synchronized void reload() {
-      if (this.root.isValid() && this.metadataFile != null && this.metadataFile.isValid()
-          && this.metadataFile.getModificationStamp() == this.lastMetadataModificationStamp) {
+      if (!this.metadataFile.isValid()) {
+        this.metadata = null;
         return;
       }
-      VirtualFile metaFile = findMetaFile().orElse(null);
-      if (metaFile != null &&
-          (this.metadataFile == null ||
-               this.metadataFile.getUrl().equals(metaFile.getUrl())
-                   && this.lastMetadataModificationStamp != this.metadataFile.getModificationStamp())) {
-        try {
-          AggregatedMetadataIndex index = new AggregatedMetadataIndex(generateIndex(metaFile));
-          // Spring does not create metadata for types in collections, we should create it by ourselves and expand our index,
-          // to better support code-completion, documentation, navigation, etc.
-          for (MetadataProperty property : index.getProperties().values()) {
-            resolvePropertyType(property).ifPresent(index::addFirst);
-          }
-          this.metadataFile = metaFile;
-          this.lastMetadataModificationStamp = this.metadataFile.getModificationStamp();
-          this.metadata = index;
-        } catch (IOException e) {
-          log.warn("Read metadata file " + metaFile.getUrl() + " failed", e);
+      if (this.metadataFile.getModificationStamp() == this.lastMetadataModificationStamp) {
+        return;
+      }
+      try {
+        AggregatedMetadataIndex index = new AggregatedMetadataIndex(generateIndex(this.metadataFile));
+        // Spring does not create metadata for types in collections, we should create it by ourselves and expand our index,
+        // to better support code-completion, documentation, navigation, etc.
+        for (MetadataProperty property : index.getProperties().values()) {
+          resolvePropertyType(property).ifPresent(index::addFirst);
         }
-      } else {
-        this.metadata = null;
+        this.lastMetadataModificationStamp = this.metadataFile.getModificationStamp();
+        this.metadata = index;
+      } catch (IOException e) {
+        log.warn("Read metadata file " + this.metadataFile.getUrl() + " failed", e);
       }
     }
+  }
 
 
-    private Optional<VirtualFile> findMetaFile() {
-      if (!root.isValid()) return Optional.empty();
-      @NotNull Optional<VirtualFile> metadataFile = findFile(root, METADATA_FILE);
-      if (metadataFile.isEmpty()) {
-        // Some package has additional metadata file only, so we have to load it,
-        // otherwise, spring-configuration-processor should merge additional metadata to the main one,
-        // thus, the additional metadata file should not be load.
-        metadataFile = findFile(root, ADDITIONAL_METADATA_FILE);
-      }
-      return metadataFile.filter(VirtualFile::isValid);
-    }
+  /**
+   * @see ConfigurationMetadata.Property#getType()
+   */
+  @NotNull
+  private Optional<MetadataIndex> resolvePropertyType(@NotNull MetadataProperty property) {
+    return property
+        .getFullType()
+        .filter(t -> PsiTypeUtils.isCollectionOrMap(project, t))
+        .flatMap(t -> project.getService(ProjectClassMetadataService.class).getMetadata(property.getName(), t));
+  }
 
 
-    @NotNull
-    private Optional<VirtualFile> findFile(VirtualFile root, String file) {
-      return Optional.ofNullable(VfsUtil.findRelativeFile(root, file.split("/")));
-    }
-
-
-    /**
-     * @see ConfigurationMetadata.Property#getType()
-     */
-    @NotNull
-    private Optional<MetadataIndex> resolvePropertyType(@NotNull MetadataProperty property) {
-      return property
-          .getFullType()
-          .filter(t -> PsiTypeUtils.isCollectionOrMap(project, t))
-          .flatMap(t -> project.getService(ProjectClassMetadataService.class).getMetadata(property.getName(), t));
-    }
-
-
-    @NotNull
-    private MetadataIndex generateIndex(VirtualFile file) throws IOException {
-      ConfigurationMetadata meta = ReadAction.compute(() -> {
-        try (Reader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
-          return gson.get().fromJson(reader, ConfigurationMetadata.class);
-        }
-      });
+  @NotNull
+  private MetadataIndex generateIndex(VirtualFile file) throws IOException {
+    try (Reader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
+      ConfigurationMetadata meta = gson.get().fromJson(reader, ConfigurationMetadata.class);
       return new ConfigurationMetadataIndex(project, file.getUrl(), meta);
     }
   }
@@ -192,7 +168,7 @@ final class ProjectMetadataService implements Disposable {
         interested.add(file);
       }
 
-      return new ChangeApplier() {
+      return interested.isEmpty() ? null : new ChangeApplier() {
         @Override
         public void afterVfsChange() {
           new IndexUpdater(interested).queue();
@@ -219,18 +195,21 @@ final class ProjectMetadataService implements Disposable {
           ProgressManager.checkCanceled();
           indicator.setFraction(i * 1.0D / candidates.size());
           VirtualFile file = candidates.get(i);
+          indicator.setText2("Waiting index...");
           VirtualFile root = dumbService.runReadActionInSmartMode(() -> {
+            indicator.setText2("");
             ProjectFileIndex pfi = ProjectFileIndex.getInstance(project);
             if (!pfi.isInProject(file)) return null;
             return pfi.getClassRootForFile(file);
           });
+          FileBasedIndex.getInstance().getSingleEntryIndexData()
           if (root == null) continue;
           String relativePath = VfsUtilCore.getRelativePath(file, root);
           if (!(METADATA_DIR + file.getName()).equals(relativePath)) continue;
           indicator.setText("Loading " + file.getPresentableUrl());
-          tryGetMeta(root).ifPresent(metadataFileRoot -> {
-            metadataFileRoot.reload();
-            if (metadataFileRoot.metadata == null) {
+          tryGetMeta(root).ifPresent(indexFromOneFile -> {
+            indexFromOneFile.reload();
+            if (indexFromOneFile.metadata == null) {
               metadataFiles.remove(root.getUrl());
             }
           });
