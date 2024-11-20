@@ -92,6 +92,10 @@
     <!--suppress PluginXmlValidity -->
     <postStartupActivity
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.Bootstrapper"/>
+    <indexedRootsProvider
+        implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileRootsIndexConfigurator"/>
+    <fileBasedIndex
+        implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndex"/>
     <completion.contributor language="yaml"
                             implementationClass="in.oneton.idea.spring.assistant.plugin.suggestion.completion.YamlCompletionContributor"/>
     <fileType name="spring-boot-properties-yaml"

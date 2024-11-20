@@ -171,6 +171,7 @@ tasks {
         jvmArgs("-ea", "-Xdebug")
         systemProperty("idea.is.internal", "true")
         systemProperty("idea.log.debug.categories", "dev.flikas,in.oneton.idea.spring.assistant.plugin")
+        systemProperty("intellij.idea.indices.debug", "true")
         systemProperty("intellij.idea.indices.debug.extra.sanity", "true")
     }
 

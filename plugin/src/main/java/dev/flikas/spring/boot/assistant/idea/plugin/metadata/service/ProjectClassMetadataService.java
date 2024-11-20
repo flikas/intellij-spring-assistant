@@ -33,7 +33,6 @@ import static java.util.function.Predicate.not;
  * <p>
  * And watch for update continuously.
  */
-@NotNull
 @Service(Service.Level.PROJECT)
 final class ProjectClassMetadataService implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectClassMetadataService.class);
@@ -78,7 +77,10 @@ final class ProjectClassMetadataService implements Disposable {
     if (PsiTypeUtils.isMap(project, type)) {
       try {
         PsiType[] kvType = PsiTypeUtils.getKeyValueType(project, type);
-        assert kvType != null && kvType.length == 2;
+        if (!(kvType != null && kvType.length == 2)) {
+          LOG.warn("Unsupported map type: " + type);
+          return index;
+        }
         if (!PsiTypeUtils.isValueType(kvType[0])) {
           LOG.warn(basename + " has unsupported Map key type: " + type);
           return index;

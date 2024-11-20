@@ -197,6 +197,17 @@ public class PsiTypeUtils {
   }
 
 
+  /**
+   * @return true if {@code type} is Map and the key and value type is both {@linkplain #isValueType(PsiType) value type}
+   */
+  public static boolean isValueMap(Project project, @Nullable PsiType type) {
+    if (!isMap(project, type)) return false;
+    PsiType[] typeArgs = getKeyValueType(project, type);
+    if (typeArgs == null || typeArgs.length != 2) return false;
+    return isValueType(typeArgs[0]) && isValueType(typeArgs[1]);
+  }
+
+
   private static boolean canConvertFromString(PsiType type) {
     if (type instanceof PsiClassType classType) {
       PsiClass psiClass = classType.resolve();

@@ -10,19 +10,17 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
-import com.intellij.util.indexing.FileBasedIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.AggregatedMetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.ConfigurationMetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataProperty;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
+import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.MutableReference;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiTypeUtils;
 import lombok.Getter;
@@ -38,6 +36,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndex.ADDITIONAL_METADATA_FILE_NAME;
+import static dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndex.METADATA_FILE_NAME;
+
 /**
  * Service that generates {@link MetadataIndex} from one {@linkplain ModuleRootModel#getSourceRoots() SourceRoot}.
  * <p>
@@ -46,12 +47,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Service(Service.Level.PROJECT)
 final class ProjectMetadataService implements Disposable {
-  public static final String METADATA_DIR = "META-INF/";
-  public static final String METADATA_FILE_NAME = "spring-configuration-metadata.json";
-  public static final String ADDITIONAL_METADATA_FILE_NAME = "additional-spring-configuration-metadata.json";
-  public static final String METADATA_FILE = METADATA_DIR + METADATA_FILE_NAME;
-  public static final String ADDITIONAL_METADATA_FILE = METADATA_DIR + ADDITIONAL_METADATA_FILE_NAME;
-
   private final Logger log = Logger.getInstance(ProjectMetadataService.class);
   private final ThreadLocal<Gson> gson = ThreadLocal.withInitial(Gson::new);
   private final Project project;
@@ -67,13 +62,8 @@ final class ProjectMetadataService implements Disposable {
   }
 
 
-  public Optional<MutableReference<MetadataIndex>> getIndexForClassRoot(@NotNull VirtualFile classRoot) {
-    return tryGetMeta(classRoot).map(m -> m);
-  }
-
-
   public MutableReference<MetadataIndex> getIndexForMetaFile(@NotNull VirtualFile metadataFile) {
-    return metadataFiles.computeIfAbsent(metadataFile.getUrl(), url -> new IndexFromOneFile(metadataFile));
+    return getIndex(metadataFile);
   }
 
 
@@ -83,11 +73,8 @@ final class ProjectMetadataService implements Disposable {
   }
 
 
-  private Optional<IndexFromOneFile> tryGetMeta(@NotNull VirtualFile classRoot) {
-    return Optional.ofNullable(metadataFiles.computeIfAbsent(classRoot.getUrl(), url -> {
-      IndexFromOneFile mfr = new IndexFromOneFile(classRoot);
-      return mfr.metadata != null ? mfr : null;
-    }));
+  private IndexFromOneFile getIndex(@NotNull VirtualFile metadataFile) {
+    return metadataFiles.computeIfAbsent(metadataFile.getUrl(), url -> new IndexFromOneFile(metadataFile));
   }
 
 
@@ -196,23 +183,18 @@ final class ProjectMetadataService implements Disposable {
           indicator.setFraction(i * 1.0D / candidates.size());
           VirtualFile file = candidates.get(i);
           indicator.setText2("Waiting index...");
-          VirtualFile root = dumbService.runReadActionInSmartMode(() -> {
+          if (!dumbService.runReadActionInSmartMode(() -> {
             indicator.setText2("");
-            ProjectFileIndex pfi = ProjectFileIndex.getInstance(project);
-            if (!pfi.isInProject(file)) return null;
-            return pfi.getClassRootForFile(file);
-          });
-          FileBasedIndex.getInstance().getSingleEntryIndexData()
-          if (root == null) continue;
-          String relativePath = VfsUtilCore.getRelativePath(file, root);
-          if (!(METADATA_DIR + file.getName()).equals(relativePath)) continue;
+            return MetadataFileIndex.isMetaFile(file, project);
+          })) {
+            continue;
+          }
           indicator.setText("Loading " + file.getPresentableUrl());
-          tryGetMeta(root).ifPresent(indexFromOneFile -> {
-            indexFromOneFile.reload();
-            if (indexFromOneFile.metadata == null) {
-              metadataFiles.remove(root.getUrl());
-            }
-          });
+          IndexFromOneFile index = getIndex(file);
+          index.reload();
+          if (index.metadata == null) {
+            metadataFiles.remove(file.getUrl());
+          }
           indicator.setText("");
         }
       }

@@ -23,10 +23,12 @@ public class BootstrapImpl implements StartupActivity.Background {
   @Override
   public void runActivity(@NotNull Project project) {
     ProgressManager.getInstance().run(
-        new Task.Backgroundable(project, "Index spring configuration metadata") {
+        new Task.Backgroundable(project, "Load spring configuration metadata") {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
+            indicator.setText2("Waiting index...");
             DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+              indicator.setText2("");
               debug(() -> log.debug("Project " + project.getName() + " is opened, indexing will start"));
               try {
                 project.getService(ProjectSuggestionService.class).reindex();

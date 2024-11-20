@@ -266,7 +266,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
       PropertyName keyName = PropertyName.adapt(key);
       return this.propertyName.equals(keyName)
           // A Map property can bind all sub-key-values.
-          || this.propertyName.isAncestorOf(keyName) && PsiTypeUtils.isMap(project, getFullType().orElse(null));
+          || this.propertyName.isAncestorOf(keyName) && PsiTypeUtils.isValueMap(project, getFullType().orElse(null));
     }
 
 

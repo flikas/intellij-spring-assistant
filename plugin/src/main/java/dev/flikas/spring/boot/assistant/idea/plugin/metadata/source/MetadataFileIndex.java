@@ -1,6 +1,8 @@
 package dev.flikas.spring.boot.assistant.idea.plugin.metadata.source;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,16 +15,19 @@ import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 public class MetadataFileIndex extends ScalarIndexExtension<String> {
+  public static final String META_FILE_DIR = "META-INF";
   public static final String METADATA_FILE_NAME = "spring-configuration-metadata.json";
-  public static final String METADATA_FILE = "META-INF/" + METADATA_FILE_NAME;
+  public static final String METADATA_FILE = META_FILE_DIR + "/" + METADATA_FILE_NAME;
   public static final String ADDITIONAL_METADATA_FILE_NAME = "additional-spring-configuration-metadata.json";
-  public static final String ADDITIONAL_METADATA_FILE = "META-INF/" + ADDITIONAL_METADATA_FILE_NAME;
+  public static final String ADDITIONAL_METADATA_FILE = META_FILE_DIR + "/" + ADDITIONAL_METADATA_FILE_NAME;
   public static final String PLUGIN_INDEX_NAMESPACE = "dev.flikas.spring-boot-assistant.";
   public static final ID<String, Void> NAME = ID.create(
       PLUGIN_INDEX_NAMESPACE + MetadataFileIndex.class.getSimpleName());
@@ -32,7 +37,31 @@ public class MetadataFileIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   public static Collection<VirtualFile> getFiles(@NotNull GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, UNIQUE_KEY, scope);
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, UNIQUE_KEY, scope)
+        .stream()
+        .filter(vf -> isMetaFile(vf, Objects.requireNonNull(scope.getProject())))
+        .toList();
+  }
+
+
+  public static boolean isMetaFile(@NotNull VirtualFile file, @NotNull Project project) {
+    String name = file.getName();
+    if (!name.equals(METADATA_FILE_NAME) && !name.equals(ADDITIONAL_METADATA_FILE_NAME)) {
+      return false;
+    }
+    VirtualFile classRoot;
+    if (file.isInLocalFileSystem()) {
+      @Nullable Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
+      if (module == null) return false;
+      @Nullable CompilerModuleExtension cme = CompilerModuleExtension.getInstance(module);
+      if (cme == null) return false;
+      classRoot = cme.getCompilerOutputPath();
+      if (classRoot == null) return false;
+    } else {
+      classRoot = VfsUtilCore.getRootFile(file);
+    }
+    String relPath = VfsUtilCore.getRelativePath(file, classRoot);
+    return relPath != null && (relPath.equals(METADATA_FILE) || relPath.equals(ADDITIONAL_METADATA_FILE));
   }
 
 
@@ -47,18 +76,6 @@ public class MetadataFileIndex extends ScalarIndexExtension<String> {
     return new DataIndexer<>() {
       @Override
       public @NotNull Map<String, Void> map(@NotNull FileContent inputData) {
-        VirtualFile file = inputData.getFile();
-        if (file.isInLocalFileSystem()) {
-          Project project = inputData.getProject();
-          ProjectFileIndex pfi = ProjectFileIndex.getInstance(project);
-          VirtualFile root = pfi.getClassRootForFile(file);
-          if (root == null) return Collections.emptyMap();
-          String relativePath = VfsUtilCore.getRelativePath(file, root);
-          if (relativePath == null || relativePath.equals(METADATA_FILE)
-              || relativePath.equals(ADDITIONAL_METADATA_FILE)) {
-            return Collections.emptyMap();
-          }
-        }
         return Collections.singletonMap(UNIQUE_KEY, null);
       }
     };
@@ -68,25 +85,12 @@ public class MetadataFileIndex extends ScalarIndexExtension<String> {
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return file -> {
-      if (!file.getName().equals(METADATA_FILE_NAME) && !file.getName().equals(ADDITIONAL_METADATA_FILE_NAME)) {
+      String name = file.getName();
+      if (!name.equals(METADATA_FILE_NAME) && !name.equals(ADDITIONAL_METADATA_FILE_NAME)) {
         return false;
       }
-      if (file.getName().equals(ADDITIONAL_METADATA_FILE_NAME)) {
-        VirtualFile parent = file.getParent();
-        if (parent != null && parent.findChild(METADATA_FILE_NAME) != null) {
-          // Some package has additional metadata file only, we have to load it,
-          // otherwise, spring-configuration-processor should merge additional metadata to the main one,
-          // thus, the additional metadata file should not be load.
-          return false;
-        }
-      }
-      if (file.isInLocalFileSystem()) {
-        String path = file.getPath();
-        return path.endsWith(METADATA_FILE) || path.endsWith(ADDITIONAL_METADATA_FILE);
-      } else {
-        String relPath = VfsUtilCore.getRelativePath(file, VfsUtilCore.getRootFile(file));
-        return relPath != null && (relPath.equals(METADATA_FILE) || relPath.equals(ADDITIONAL_METADATA_FILE));
-      }
+      VirtualFile parent = file.getParent();
+      return parent != null && parent.getName().equals(META_FILE_DIR);
     };
   }
 
@@ -99,7 +103,7 @@ public class MetadataFileIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
 

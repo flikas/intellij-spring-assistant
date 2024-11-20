@@ -132,6 +132,8 @@ spring:
 
 
 ---
+oo:
+  b: c
 example:
   server:
     address:
