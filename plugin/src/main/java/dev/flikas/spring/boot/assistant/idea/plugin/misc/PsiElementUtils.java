@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiJvmMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -52,17 +53,15 @@ public class PsiElementUtils {
       return null;
     }
     return doc.toString().strip();
-//    return Arrays.stream(comment.getDescriptionElements())
-//        .map(PsiElement::getText)
-//        .collect(Collectors.joining("\n")).strip();
   }
 
 
-  public static String createLinkForDoc(@NotNull PsiMethod method) {
-    PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null) return method.toString();
-    String label = containingClass.getQualifiedName() + "." + method.getName() + "()";
-    String ref = containingClass.getQualifiedName() + "#" + method.getName();
+  public static String createLinkForDoc(@NotNull PsiJvmMember member) {
+    PsiClass containingClass = member.getContainingClass();
+    if (containingClass == null) return member.toString();
+    String label = containingClass.getQualifiedName() + "."
+        + member.getName() + (member instanceof PsiMethod ? "()" : "");
+    String ref = containingClass.getQualifiedName() + "#" + member.getName();
     return createHyperLink(ref, label);
   }
 
