@@ -127,9 +127,9 @@ public class PropertyDocumentationTarget implements ProjectDocumentationTarget {
     }
     doc.append(body);
 
-    property.getSourceType().ifPresent(sourceType -> doc.hr().append(
+    property.getSourceField().ifPresent(field -> doc.hr().append(
         BOTTOM_ELEMENT.child(GRAYED_ELEMENT.addText("Declared at: "))
-            .addRaw(PsiElementUtils.createLinkForDoc(sourceType)))
+            .addRaw(PsiElementUtils.createLinkForDoc(field)))
     );
 
     return DocumentationResult.documentation(doc.toString());

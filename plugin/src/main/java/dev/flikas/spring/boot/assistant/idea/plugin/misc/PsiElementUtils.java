@@ -57,18 +57,22 @@ public class PsiElementUtils {
 
 
   public static String createLinkForDoc(@NotNull PsiJvmMember member) {
+    String label;
+    String ref;
     PsiClass containingClass = member.getContainingClass();
-    if (containingClass == null) return member.toString();
-    String label = containingClass.getQualifiedName() + "."
-        + member.getName() + (member instanceof PsiMethod ? "()" : "");
-    String ref = containingClass.getQualifiedName() + "#" + member.getName();
-    return createHyperLink(ref, label);
-  }
-
-
-  public static String createLinkForDoc(@NotNull PsiClass psiClass) {
-    String label = psiClass.getQualifiedName();
-    String ref = psiClass.getQualifiedName();
+    if (containingClass == null) {
+      if (member instanceof PsiClass psiClass) {
+        label = psiClass.getQualifiedName();
+        ref = psiClass.getQualifiedName();
+      } else {
+        label = member.getName();
+        ref = member.getName();
+      }
+    } else {
+      label = containingClass.getQualifiedName() + "."
+          + member.getName() + (member instanceof PsiMethod ? "()" : "");
+      ref = containingClass.getQualifiedName() + "#" + member.getName();
+    }
     return createHyperLink(ref, label);
   }
 

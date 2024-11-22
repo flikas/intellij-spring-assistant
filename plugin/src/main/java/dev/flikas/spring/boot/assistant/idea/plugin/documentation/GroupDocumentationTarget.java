@@ -14,7 +14,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiJvmMember;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataGroup;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiElementUtils;
@@ -136,21 +136,14 @@ public class GroupDocumentationTarget implements ProjectDocumentationTarget {
 
     // Append "Declared at" section as follows:
     // Declared at: {@link com.acme.GenericRemovedClass#method}> <-- only for groups with method info
-    String declaredAt = null;
-    Optional<PsiMethod> sourceMethod = group.getSourceMethod();
-    if (sourceMethod.isPresent()) {
-      declaredAt = PsiElementUtils.createLinkForDoc(sourceMethod.get());
-    } else {
-      Optional<PsiClass> sourceType = group.getSourceType();
-      if (sourceType.isPresent()) {
-        declaredAt = PsiElementUtils.createLinkForDoc(sourceType.get());
-      }
-    }
-    if (StringUtils.isNotBlank(declaredAt)) {
-      doc.hr().append(DocumentationMarkup.BOTTOM_ELEMENT
-          .child(DocumentationMarkup.GRAYED_ELEMENT.addText("Declared at: "))
-          .addRaw(declaredAt));
-    }
+    group.getSourceMethod()
+        .map(m -> (PsiJvmMember) m)
+        .or(group::getSourceType)
+        .map(PsiElementUtils::createLinkForDoc)
+        .filter(StringUtils::isNotBlank)
+        .ifPresent(link -> doc.hr().append(DocumentationMarkup.BOTTOM_ELEMENT
+            .child(DocumentationMarkup.GRAYED_ELEMENT.addText("Declared at: "))
+            .addRaw(link)));
     return DocumentationResult.documentation(doc.toString());
   }
 }
