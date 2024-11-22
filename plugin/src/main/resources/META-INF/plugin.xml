@@ -93,7 +93,7 @@
     <postStartupActivity
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.Bootstrapper"/>
     <indexedRootsProvider
-        implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileRootsIndexConfigurator"/>
+        implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndexConfigurator"/>
     <fileBasedIndex
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndex"/>
     <completion.contributor language="yaml"

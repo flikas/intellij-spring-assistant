@@ -64,6 +64,15 @@ public class GenericUtil {
     return type.toString();
   }
 
+  public static String shortenJavaType(String type){
+    JvmPrimitiveTypeKind ptk = JvmPrimitiveTypeKind.getKindByFqn(type.toString());
+    if (ptk != null) {
+      return ptk.getName();
+    }else{
+      return shortenedType(type);
+    }
+  }
+
 
   public static CharSequence trimJavaPackage(CharSequence type, CharSequence packageName) {
     String prefix = packageName + ".";
@@ -86,7 +95,7 @@ public class GenericUtil {
       if (Character.isJavaIdentifierPart(c) || c == '.') {
         baseClass.append(c);
       } else {
-        String shortenName = shortenFrequentJavaType(baseClass.toString());
+        String shortenName = shortenJavaType(baseClass.toString());
         createHyperlink(
             buffer,
             typeForDocumentationNavigation(baseClass.toString()),
@@ -107,7 +116,7 @@ public class GenericUtil {
       }
     }
     if (baseClass.length() > 0) {
-      String shortenName = shortenFrequentJavaType(baseClass.toString());
+      String shortenName = shortenJavaType(baseClass.toString());
       createHyperlink(
           buffer,
           typeForDocumentationNavigation(baseClass.toString()),

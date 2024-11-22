@@ -45,7 +45,7 @@ public class YamlDocumentationTargetProvider implements PsiDocumentationTargetPr
 
     return switch (propertyOrGroup) {
       case MetadataProperty property -> List.of(new PropertyDocumentationTarget(property));
-      case MetadataGroup group -> List.of(GroupDocumentationTarget.createTargets(group));
+      case MetadataGroup group -> List.of(new GroupDocumentationTarget(group));
       default -> throw new IllegalStateException("Unsupported type: " + propertyOrGroup.getClass());
     };
   }

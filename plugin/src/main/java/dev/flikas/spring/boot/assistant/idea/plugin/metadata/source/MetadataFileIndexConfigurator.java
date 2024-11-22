@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * Add project's {@code <module-output-dir>/META-INF/(additional-)spring-configuration-metadata.json} files into file-based index, for {@link MetadataFileIndex}.
  */
-public class MetadataFileRootsIndexConfigurator extends IndexableSetContributor {
+public class MetadataFileIndexConfigurator extends IndexableSetContributor {
   @Override
   public @NotNull Set<VirtualFile> getAdditionalRootsToIndex() {
     return Set.of();

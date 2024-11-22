@@ -1,8 +1,10 @@
 package dev.flikas.spring.boot.assistant.idea.plugin.metadata.index;
 
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -11,6 +13,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.PropertyName;
+import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiElementUtils;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiMethodUtils;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiTypeUtils;
 import lombok.AccessLevel;
@@ -232,6 +235,12 @@ abstract class MetadataIndexBase implements MetadataIndex {
 
 
     @Override
+    public @NotNull String getRenderedDescription() {
+      return "";
+    }
+
+
+    @Override
     public MetadataIndex getIndex() {
       return MetadataIndexBase.this;
     }
@@ -283,6 +292,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
   protected class Group implements MetadataGroup {
     @Getter
     private final ConfigurationMetadata.Group metadata;
+    private volatile String renderedDocument = null;
 
 
     @Override
@@ -310,6 +320,47 @@ abstract class MetadataIndexBase implements MetadataIndex {
       return Optional.ofNullable(metadata.getSourceType())
           .filter(StringUtils::isNotBlank)
           .map(type -> PsiTypeUtils.findClass(project, type));
+    }
+
+
+    @Override
+    public @NotNull String getRenderedDescription() {
+      if (this.renderedDocument != null) {
+        return this.renderedDocument;
+      }
+      synchronized (this) {
+        if (this.renderedDocument != null) {
+          return this.renderedDocument;
+        }
+        HtmlBuilder doc = new HtmlBuilder();
+        String desc = metadata.getDescription();
+        //Unfortunately, even though there is a 'description' field for the group metadata, `spring boot configuration processor` will never fill it.
+        //Here we use group class/method's document instead.
+        String descFrom = null;
+        if (StringUtils.isBlank(desc)) {
+          desc = getSourceMethod().map(PsiElementUtils::getDocument).orElse(null);
+          descFrom = getSourceMethod().map(PsiElementUtils::createLinkForDoc).orElse(null);
+        }
+        if (StringUtils.isBlank(desc)) {
+          desc = getType().map(PsiElementUtils::getDocument).orElse(null);
+          descFrom = getType().map(PsiElementUtils::createLinkForDoc).orElse(null);
+        }
+        if (StringUtils.isBlank(desc)) {
+          desc = getSourceType().map(PsiElementUtils::getDocument).orElse(null);
+          descFrom = getSourceType().map(PsiElementUtils::createLinkForDoc).orElse(null);
+        }
+        if (StringUtils.isNotBlank(desc)) {
+          if (StringUtils.isNotBlank(descFrom)) {
+            doc.append(DocumentationMarkup.GRAYED_ELEMENT
+                .addText("(Doc below is copied from ")
+                .addRaw(descFrom)
+                .addText(")\n"));
+          }
+          doc.appendRaw(desc);
+        }
+        this.renderedDocument = doc.toString();
+      }
+      return this.renderedDocument;
     }
 
 

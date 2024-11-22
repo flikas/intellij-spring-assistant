@@ -28,5 +28,11 @@ public interface MetadataItem {
    */
   Optional<PsiClass> getSourceType();
 
+  /**
+   * @return Rendered(HTML) description for this item
+   */
+  @NotNull
+  String getRenderedDescription();
+
   MetadataIndex getIndex();
 }

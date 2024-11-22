@@ -5,32 +5,31 @@ import com.intellij.model.Pointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.platform.backend.documentation.DocumentationResult;
 import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.PlatformIcons;
+import com.intellij.psi.PsiType;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataProperty;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata.Property.Deprecation;
+import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiElementUtils;
+import in.oneton.idea.spring.assistant.plugin.misc.GenericUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInsight.documentation.DocumentationManagerUtil.createHyperlink;
-import static com.intellij.lang.documentation.DocumentationMarkup.CONTENT_END;
-import static com.intellij.lang.documentation.DocumentationMarkup.CONTENT_START;
-import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_END;
-import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_START;
-import static com.intellij.lang.documentation.DocumentationMarkup.SECTIONS_END;
-import static com.intellij.lang.documentation.DocumentationMarkup.SECTIONS_START;
-import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_END;
-import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_HEADER_START;
-import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_SEPARATOR;
-import static in.oneton.idea.spring.assistant.plugin.misc.GenericUtil.methodForDocumentationNavigation;
-import static in.oneton.idea.spring.assistant.plugin.misc.GenericUtil.removeGenerics;
-import static in.oneton.idea.spring.assistant.plugin.misc.GenericUtil.updateClassNameAsJavadocHtml;
+import static com.intellij.lang.documentation.DocumentationMarkup.BOTTOM_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.CONTENT_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.GRAYED_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.SECTIONS_TABLE;
+import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_CONTENT_CELL;
+import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_HEADER_CELL;
 
 @SuppressWarnings("UnstableApiUsage")
 public class PropertyDocumentationTarget implements ProjectDocumentationTarget {
@@ -58,17 +57,12 @@ public class PropertyDocumentationTarget implements ProjectDocumentationTarget {
 
   @Override
   public @NotNull TargetPresentation computePresentation() {
-    String locationText = property
-        .getSourceType()
-        .map(PsiElement::getContainingFile)
-        .map(PsiFile::getVirtualFile)
+    String locationText = property.getSourceType().map(PsiElement::getContainingFile).map(PsiFile::getVirtualFile)
         .map(f -> ProjectFileIndex.getInstance(project).getOrderEntriesForFile(f))
         .map(l -> l.stream().map(OrderEntry::getPresentableName).distinct().collect(Collectors.joining(", ")))
         .orElse(null);
-    return TargetPresentation.builder(property.getName())
-        .icon(PlatformIcons.PROPERTY_ICON)
-        .containerText(property.getMetadata().getSourceType())
-        .locationText(locationText, AllIcons.Nodes.PpLibFolder)
+    return TargetPresentation.builder(property.getName()).icon(AllIcons.Nodes.Property)
+        .containerText(property.getMetadata().getSourceType()).locationText(locationText, AllIcons.Nodes.Library)
         .presentation();
   }
 
@@ -86,75 +80,57 @@ public class PropertyDocumentationTarget implements ProjectDocumentationTarget {
      * <b>WARNING:</b>
      * @deprecated Due to something something. Replaced by <b>c.d.e</b>
      */
-    StringBuilder doc = new StringBuilder(DEFINITION_START);
-    String className = property.getMetadata().getType();
-    if (className != null) {
-      int l = updateClassNameAsJavadocHtml(doc, className);
-      if (l > 20) {
-        doc.append('\n');
-      } else {
-        doc.append(' ');
-      }
+    HtmlBuilder doc = new HtmlBuilder();
+    HtmlChunk.Element def = DEFINITION_ELEMENT;
+    Optional<PsiType> propertyType = property.getFullType();
+    if (propertyType.isPresent()) {
+      StringBuilder typeHtml = new StringBuilder();
+      GenericUtil.updateClassNameAsJavadocHtml(typeHtml, propertyType.get().getCanonicalText());
+      def = def.addRaw(typeHtml.toString()).child(HtmlChunk.br());
     }
-    doc.append(property.getName());
+    def = def.child(HtmlChunk.icon("AllIcons.Nodes.Property", AllIcons.Nodes.Property)).child(HtmlChunk.nbsp())
+        .addText(property.getName());
     Object defaultValue = property.getMetadata().getDefaultValue();
     if (defaultValue != null) {
-      doc.append(" = ").append(defaultValue);
+      def = def.addText(" = ").addText(String.valueOf(defaultValue));
     }
-    doc.append(DEFINITION_END);
+    doc.append(def);
 
-    String description = property.getMetadata().getDescription();
-    if (description != null) {
-      doc.append(CONTENT_START).append(description).append(CONTENT_END);
-    }
-
-    doc.append(SECTIONS_START);
-    if (defaultValue != null) {
-      doc.append(SECTION_HEADER_START)
-          .append("<p style='white-space:nowrap'>Default value:</p>")
-          .append(SECTION_SEPARATOR)
-          .append(defaultValue)
-          .append(SECTION_END);
-    }
-
-    String sourceType = property.getMetadata().getSourceType();
-    if (sourceType != null) {
-      String sourceTypeInJavadocFormat = removeGenerics(sourceType);
-      // lets show declaration point only if does not match the type
-      if (!sourceTypeInJavadocFormat.equals(removeGenerics(className))) {
-        StringBuilder buffer = new StringBuilder();
-        createHyperlink(buffer, methodForDocumentationNavigation(sourceTypeInJavadocFormat),
-            sourceTypeInJavadocFormat, false
-        );
-        sourceTypeInJavadocFormat = buffer.toString();
-        doc.append(SECTION_HEADER_START)
-            .append("<p style='white-space:nowrap'>Declared at:</p>")
-            .append(SECTION_SEPARATOR)
-            .append(sourceTypeInJavadocFormat)
-            .append(SECTION_END);
-      }
-    }
-
+    HtmlChunk.Element body = CONTENT_ELEMENT;
     Deprecation deprecation = property.getMetadata().getDeprecation();
     if (deprecation != null) {
-      doc.append(SECTION_HEADER_START)
-          .append("Deprecation:")
-          .append(SECTION_SEPARATOR)
-          .append("<p><b>")
-          .append(deprecation.getLevel() == Deprecation.Level.ERROR ?
-              "ERROR: DO NOT USE THIS PROPERTY AS IT IS COMPLETELY UNSUPPORTED" :
-              "WARNING: PROPERTY IS DEPRECATED")
-          .append("</b></p>");
+      HtmlChunk.Element dpc = CONTENT_ELEMENT;
+      dpc = dpc.child(HtmlChunk.text(deprecation.getLevel() == Deprecation.Level.ERROR
+          ? "ERROR: DO NOT USE THIS PROPERTY AS IT IS COMPLETELY UNSUPPORTED"
+          : "WARNING: PROPERTY IS DEPRECATED").bold());
+      HtmlChunk.Element table = SECTIONS_TABLE;
       if (deprecation.getReason() != null) {
-        doc.append("<p><b>Reason:</b> ").append(deprecation.getReason()).append("</p>");
+        table = table.child(HtmlChunk.tag("tr")
+            .children(SECTION_HEADER_CELL.addText("Reason:"), SECTION_CONTENT_CELL.addText(deprecation.getReason())));
       }
       if (deprecation.getReplacement() != null) {
-        doc.append("<p>Replaced by property:<b> ").append(deprecation.getReplacement())
-            .append("</b></p>");
+        table = table.children(HtmlChunk.tag("tr").children(SECTION_HEADER_CELL.addText("Replaced by:"),
+            SECTION_CONTENT_CELL.addText(deprecation.getReplacement())));
       }
-      doc.append(SECTION_END);
+      if (!table.isEmpty()) {
+        dpc = dpc.child(table);
+      }
+      dpc = dpc.child(HtmlChunk.hr());
+      body = body.child(dpc);
     }
-    doc.append(SECTIONS_END);
+
+    body = body.addRaw(property.getRenderedDescription());
+
+    if (defaultValue != null) {
+      body = body.child(SECTIONS_TABLE.child(SECTION_HEADER_CELL.addText("Default value:"))
+          .child(SECTION_CONTENT_CELL.addText(String.valueOf(defaultValue))));
+    }
+    doc.append(body);
+
+    property.getSourceType().ifPresent(sourceType -> doc.hr().append(
+        BOTTOM_ELEMENT.child(GRAYED_ELEMENT.addText("Declared at: "))
+            .addRaw(PsiElementUtils.createLinkForDoc(sourceType)))
+    );
 
     return DocumentationResult.documentation(doc.toString());
   }
