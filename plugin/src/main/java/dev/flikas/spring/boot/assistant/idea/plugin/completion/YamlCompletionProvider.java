@@ -21,7 +21,6 @@ import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataPrope
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.service.ModuleMetadataService;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
 import in.oneton.idea.spring.assistant.plugin.misc.GenericUtil;
-import in.oneton.idea.spring.assistant.plugin.suggestion.handler.YamlKeyInsertHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +83,7 @@ class YamlCompletionProvider extends CompletionProvider<CompletionParameters> {
   }
 
 
-  private LookupElement createLookupElement(MetadataProperty property) {
+  private static LookupElement createLookupElement(MetadataProperty property) {
     ConfigurationMetadata.Property.Deprecation deprecation = property.getMetadata().getDeprecation();
     if (deprecation != null && deprecation.getLevel() == ConfigurationMetadata.Property.Deprecation.Level.ERROR) {
       // Fully unsupported property should not be included in suggestion
@@ -105,7 +104,7 @@ class YamlCompletionProvider extends CompletionProvider<CompletionParameters> {
   }
 
 
-  private LookupElement createLookupElement(MetadataGroup group) {
+  private static LookupElement createLookupElement(MetadataGroup group) {
     return LookupElementBuilder
         .create(group.getName())
         .withIcon(AllIcons.FileTypes.SourceMap)
