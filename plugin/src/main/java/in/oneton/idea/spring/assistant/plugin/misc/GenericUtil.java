@@ -64,8 +64,10 @@ public class GenericUtil {
     return type.toString();
   }
 
+
+  @SuppressWarnings("UnstableApiUsage")
   public static String shortenJavaType(String type){
-    JvmPrimitiveTypeKind ptk = JvmPrimitiveTypeKind.getKindByFqn(type.toString());
+    JvmPrimitiveTypeKind ptk = JvmPrimitiveTypeKind.getKindByFqn(type);
     if (ptk != null) {
       return ptk.getName();
     }else{

@@ -20,6 +20,7 @@ import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataItem;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataProperty;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.service.ModuleMetadataService;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
+import in.oneton.idea.spring.assistant.plugin.misc.GenericUtil;
 import in.oneton.idea.spring.assistant.plugin.suggestion.handler.YamlKeyInsertHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -89,13 +90,18 @@ class YamlCompletionProvider extends CompletionProvider<CompletionParameters> {
       // Fully unsupported property should not be included in suggestion
       return null;
     }
-    return LookupElementBuilder
+    LookupElementBuilder leb = LookupElementBuilder
         .create(property.getName())
         .withIcon(AllIcons.Nodes.Property)
-        .withTailText(property.getMetadata().getDescription(), true)
-        .withTypeText(property.getMetadata().getType(), true)
         .withStrikeoutness(deprecation != null)
         .withInsertHandler(new YamlKeyInsertHandler());
+    if (StringUtils.isNotBlank(property.getMetadata().getDescription())) {
+      leb = leb.withTailText("(" + property.getMetadata().getDescription() + ")", true);
+    }
+    if (StringUtils.isNotBlank(property.getMetadata().getType())) {
+      leb = leb.withTypeText(GenericUtil.shortenJavaType(property.getMetadata().getType()), true);
+    }
+    return leb;
   }
 
 
@@ -103,8 +109,6 @@ class YamlCompletionProvider extends CompletionProvider<CompletionParameters> {
     return LookupElementBuilder
         .create(group.getName())
         .withIcon(AllIcons.FileTypes.SourceMap)
-        .withTailText(group.getMetadata().getDescription(), true)
-        .withTypeText(group.getMetadata().getType(), true)
         .withInsertHandler(new YamlKeyInsertHandler());
   }
 }
