@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-@SuppressWarnings("LombokGetterMayBeUsed")
 @EqualsAndHashCode(of = "metadata")
 @ToString(of = "metadata")
 class MetadataGroupImpl implements MetadataGroup {

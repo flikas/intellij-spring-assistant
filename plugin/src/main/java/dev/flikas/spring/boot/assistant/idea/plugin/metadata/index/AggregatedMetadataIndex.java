@@ -6,6 +6,7 @@ import dev.flikas.spring.boot.assistant.idea.plugin.misc.MutableReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Objects;
@@ -136,10 +137,10 @@ public class AggregatedMetadataIndex implements MetadataIndex {
 
 
   @Override
-  public @NotNull Map<PropertyName, MetadataItem> findPropertyOrGroupByPrefix(String prefix) {
+  public @NotNull Collection<MetadataItem> findPropertyOrGroupByPrefix(String prefix) {
     return getIndexStream()
-        .flatMap(index -> index.findPropertyOrGroupByPrefix(prefix).entrySet().stream())
-        .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+        .flatMap(index -> index.findPropertyOrGroupByPrefix(prefix).stream())
+        .collect(Collectors.toSet());
   }
 
 

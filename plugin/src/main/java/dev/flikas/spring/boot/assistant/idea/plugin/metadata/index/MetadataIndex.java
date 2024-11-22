@@ -5,6 +5,8 @@ import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.PropertyName
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public interface MetadataIndex {
@@ -78,8 +80,8 @@ public interface MetadataIndex {
 
 
       @Override
-      public @NotNull Map<PropertyName, MetadataItem> findPropertyOrGroupByPrefix(String prefix) {
-        return Map.of();
+      public @NotNull Collection<MetadataItem> findPropertyOrGroupByPrefix(String prefix) {
+        return Collections.emptySet();
       }
       //endregion
     };
@@ -110,5 +112,5 @@ public interface MetadataIndex {
 
   @Nullable MetadataItem getPropertyOrGroup(String name);
 
-  @NotNull Map<PropertyName, MetadataItem> findPropertyOrGroupByPrefix(String prefix);
+  @NotNull Collection<MetadataItem> findPropertyOrGroupByPrefix(String prefix);
 }

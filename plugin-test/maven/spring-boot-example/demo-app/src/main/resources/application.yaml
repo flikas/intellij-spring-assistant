@@ -129,7 +129,7 @@ spring:
   # Inspection::Deprecated(negative)
   profiles:
     - abcdef
-
+  b
 
 ---
 oo:
