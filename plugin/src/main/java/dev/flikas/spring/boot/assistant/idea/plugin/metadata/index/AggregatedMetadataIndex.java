@@ -135,6 +135,14 @@ public class AggregatedMetadataIndex implements MetadataIndex {
   }
 
 
+  @Override
+  public @NotNull Map<PropertyName, MetadataItem> findPropertyOrGroupByPrefix(String prefix) {
+    return getIndexStream()
+        .flatMap(index -> index.findPropertyOrGroupByPrefix(prefix).entrySet().stream())
+        .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
+
+
   private @NotNull Stream<? extends MetadataIndex> getIndexStream() {
     return indexes.stream()
         .map(MutableReference::dereference)

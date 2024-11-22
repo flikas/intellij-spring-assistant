@@ -96,39 +96,24 @@
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndexConfigurator"/>
     <fileBasedIndex
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndex"/>
-    <completion.contributor language="yaml"
-                            implementationClass="in.oneton.idea.spring.assistant.plugin.suggestion.completion.YamlCompletionContributor"/>
+    <completion.contributor
+        language="yaml"
+        implementationClass="dev.flikas.spring.boot.assistant.idea.plugin.completion.YamlCompletionContributor"/>
     <fileType name="spring-boot-properties-yaml"
               implementationClass="dev.flikas.spring.boot.assistant.idea.plugin.filetype.SpringBootConfigurationYamlFileType"
               fieldName="INSTANCE"
               fileNames="application.yml;application.yaml"
               patterns="application-*.yaml;application-*.yml;bootstrap.yml;bootstrap-*.yml;bootstrap.yaml;bootstrap-*.yaml"/>
     <psi.referenceContributor
+        language="yaml"
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.navigation.YamlReferenceContributor"/>
     <referencesSearch
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.navigation.PsiToYamlKeySearcher"/>
-    <!--<completion.contributor language="Properties"-->
-    <!--implementationClass="in.oneton.idea.spring.assistant.plugin.suggestion.completion.PropertiesCompletionContributor"/>-->
 
     <platform.backend.documentation.psiTargetProvider
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.documentation.YamlDocumentationTargetProvider"/>
     <platform.backend.documentation.linkHandler
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.documentation.ProjectDocumentationLinkHandler"/>
-    <!--      <documentationProvider
-                  implementation="in.oneton.idea.spring.assistant.plugin.suggestion.completion.YamlDocumentationProvider"/>-->
-
-    <!--<documentationProvider-->
-    <!--implementation="in.oneton.idea.spring.assistant.plugin.suggestion.completion.PropertiesDocumentationProvider"/>-->
-
-    <!--<annotator-->
-    <!--implementationClass="DuplicateKeyAnnotator"-->
-    <!--language="yaml"/>-->
-    <!--<annotator-->
-    <!--implementationClass="DataTypeCheckerAnnotator"-->
-    <!--language="yaml"/>-->
-    <!--<annotator-->
-    <!--implementationClass="PropertyNotInModelAnnotator"-->
-    <!--language="yaml"/>-->
 
     <projectService
         serviceInterface="in.oneton.idea.spring.assistant.plugin.suggestion.service.ProjectSuggestionService"

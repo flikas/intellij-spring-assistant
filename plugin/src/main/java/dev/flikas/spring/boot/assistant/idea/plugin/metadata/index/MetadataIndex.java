@@ -75,6 +75,12 @@ public interface MetadataIndex {
       public MetadataItem getPropertyOrGroup(String name) {
         return null;
       }
+
+
+      @Override
+      public @NotNull Map<PropertyName, MetadataItem> findPropertyOrGroupByPrefix(String prefix) {
+        return Map.of();
+      }
       //endregion
     };
   }
@@ -103,4 +109,6 @@ public interface MetadataIndex {
   @Nullable MetadataHint getHint(String name);
 
   @Nullable MetadataItem getPropertyOrGroup(String name);
+
+  @NotNull Map<PropertyName, MetadataItem> findPropertyOrGroupByPrefix(String prefix);
 }
