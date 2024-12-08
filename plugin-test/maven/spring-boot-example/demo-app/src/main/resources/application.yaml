@@ -128,8 +128,17 @@ logging:
 spring:
   # Inspection::Deprecated(negative)
   profiles:
-    - abcdef
-
+    - abc
+  security:
+    filter.order: 1
+    oauth2:
+      resourceserver:
+        jwt:
+          audiences:
+            - oo
+        opaquetoken:
+          client-id: j
+          client-secret: yaho
 ---
 oo:
   b: c

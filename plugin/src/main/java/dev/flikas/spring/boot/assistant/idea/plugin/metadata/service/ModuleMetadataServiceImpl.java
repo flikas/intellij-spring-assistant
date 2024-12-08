@@ -10,15 +10,24 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.AggregatedMetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataIndex;
+import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataItem;
+import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.NameTreeNode;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndex;
+import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.PropertyName;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationPropertyName.Form.UNIFORM;
 
 final class ModuleMetadataServiceImpl implements ModuleMetadataService {
   private static final Logger LOG = Logger.getInstance(ModuleMetadataServiceImpl.class);
@@ -40,6 +49,50 @@ final class ModuleMetadataServiceImpl implements ModuleMetadataService {
   @Override
   public @NotNull MetadataIndex getIndex() {
     return index;
+  }
+
+
+  @Override
+  public @NotNull Collection<MetadataItem> findSuggestionForCompletion(
+      @Nullable String parentName, String queryString) {
+    if (parentName == null) parentName = "";
+    NameTreeNode searchRoot = getIndex().findInNameTrie(parentName.trim());
+    if (searchRoot == null || searchRoot.isIndexed()) {
+      // we can't provide suggestion for an indexed key, user has to create the sub element then ask for suggestion.
+      return Collections.emptySet();
+    }
+    Collection<NameTreeNode> candidates = Collections.singleton(searchRoot);
+    if (StringUtils.isNotBlank(queryString)) {
+      PropertyName query = PropertyName.adapt(queryString);
+      for (int i = 0; !candidates.isEmpty() && i < query.getNumberOfElements(); i++) {
+        String qp = query.getElement(i, UNIFORM);
+        candidates = candidates.parallelStream()
+            .filter(tn -> !tn.isIndexed())
+            .map(NameTreeNode::getChildren)
+            .map(trie -> trie.prefixMap(qp))
+            .flatMap(m -> m.values().parallelStream())
+            .collect(Collectors.toSet());
+      }
+    }
+    // get all properties in candidates;
+    Collection<NameTreeNode> nodes = candidates;
+    Set<MetadataItem> result = new HashSet<>();
+    while (!nodes.isEmpty()) {
+      Set<NameTreeNode> nextNodes = new HashSet<>();
+      for (NameTreeNode n : nodes) {
+        if (n != searchRoot) {
+          result.addAll(n.getData());
+        }
+        if (!n.isIndexed()) {
+          // Suggestion should not contain indexes(Map or List), because it is hard to insert this suggestion to code.
+          nextNodes.add(n);
+        }
+      }
+      nodes = nextNodes.parallelStream()
+          .flatMap(tn -> tn.getChildren().values().stream())
+          .collect(Collectors.toSet());
+    }
+    return result;
   }
 
 

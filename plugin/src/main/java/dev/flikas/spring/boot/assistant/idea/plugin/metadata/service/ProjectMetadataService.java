@@ -118,6 +118,12 @@ final class ProjectMetadataService implements Disposable {
         log.warn("Read metadata file " + this.metadataFile.getUrl() + " failed", e);
       }
     }
+
+
+    @Override
+    public String toString() {
+      return "Metadata index form " + this.metadataFile.getPresentableUrl();
+    }
   }
 
 
@@ -129,7 +135,7 @@ final class ProjectMetadataService implements Disposable {
     return property
         .getFullType()
         .filter(t -> PsiTypeUtils.isCollectionOrMap(project, t))
-        .flatMap(t -> project.getService(ProjectClassMetadataService.class).getMetadata(property.getName(), t));
+        .flatMap(t -> project.getService(ProjectClassMetadataService.class).getMetadata(property.getNameStr(), t));
   }
 
 

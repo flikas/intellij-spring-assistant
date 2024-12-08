@@ -414,7 +414,7 @@ public class ConfigurationPropertyName implements Comparable<ConfigurationProper
 
   /**
    * Return a new {@link ConfigurationPropertyName} by based on this name offset by
-   * specific element index. For example, {@code chop(1)} on the name {@code foo.bar}
+   * specific element index. For example, {@code subName(1)} on the name {@code foo.bar}
    * will return {@code bar}.
    *
    * @param offset the element offset

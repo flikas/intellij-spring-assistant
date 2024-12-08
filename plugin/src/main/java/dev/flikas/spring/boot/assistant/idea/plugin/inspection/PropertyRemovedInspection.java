@@ -23,7 +23,7 @@ public class PropertyRemovedInspection extends PropertyDeprecatedInspectionBase 
       assert keyValue.getKey() != null;
       holder.registerProblem(
           keyValue.getKey(),
-          "Property \"" + property.getName() + "\" is deprecated and no longer supported."
+          "Property \"" + property.getNameStr() + "\" is deprecated and no longer supported."
       );
     }
   }

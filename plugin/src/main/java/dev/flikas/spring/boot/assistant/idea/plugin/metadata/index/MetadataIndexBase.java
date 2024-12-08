@@ -4,12 +4,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.PropertyName;
-import org.apache.commons.collections4.Trie;
-import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +18,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
   protected final Map<PropertyName, MetadataGroupImpl> groups = new HashMap<>();
   protected final Map<PropertyName, MetadataProperty> properties = new HashMap<>();
   protected final Map<PropertyName, MetadataHintImpl> hints = new HashMap<>();
-  protected final Trie<String, MetadataItem> propertiesAndGroupsNameIndex = new PatriciaTrie<>();
+  protected final NameTreeNode propertiesAndGroupsNameIndex = new NameTreeNode();
   protected final Project project;
 
 
@@ -50,7 +47,6 @@ abstract class MetadataIndexBase implements MetadataIndex {
   }
 
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public @NotNull Map<PropertyName, MetadataGroup> getGroups() {
     return Collections.unmodifiableMap(groups);
@@ -75,7 +71,6 @@ abstract class MetadataIndexBase implements MetadataIndex {
   }
 
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public @NotNull Map<PropertyName, MetadataProperty> getProperties() {
     return Collections.unmodifiableMap(properties);
@@ -89,7 +84,6 @@ abstract class MetadataIndexBase implements MetadataIndex {
   }
 
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public @NotNull Map<PropertyName, MetadataHint> getHints() {
     return Collections.unmodifiableMap(hints);
@@ -105,9 +99,9 @@ abstract class MetadataIndexBase implements MetadataIndex {
 
 
   @Override
-  public @NotNull Collection<MetadataItem> findPropertyOrGroupByPrefix(String prefix) {
-    String key = PropertyName.adapt(prefix).toString();
-    return this.propertiesAndGroupsNameIndex.prefixMap(key).values();
+  public @Nullable NameTreeNode findInNameTrie(String parentPropertyName) {
+    PropertyName key = PropertyName.adapt(parentPropertyName);
+    return this.propertiesAndGroupsNameIndex.findChild(key);
   }
 
 
@@ -115,16 +109,16 @@ abstract class MetadataIndexBase implements MetadataIndex {
     MetadataPropertyImpl prop = new MetadataPropertyImpl(this, p);
     PropertyName key = PropertyName.of(p.getName());
     MetadataProperty old = this.properties.put(key, prop);
-    this.propertiesAndGroupsNameIndex.put(key.toString(), prop);
+    putIntoNameIndex(key, prop);
     if (old != null) {
-      if (old instanceof AlloProperties allo) {
+      if (old instanceof HomonymProperties allo) {
         allo.add(getSource(), prop);
       } else {
         if (!old.getMetadata().equals(p)) {
-          AlloProperties allo = new AlloProperties(getSource(), old);
+          HomonymProperties allo = new HomonymProperties(getSource(), old);
           allo.add(getSource(), prop);
           this.properties.put(key, allo);
-          this.propertiesAndGroupsNameIndex.put(key.toString(), allo);
+          putIntoNameIndex(key, allo, old);
         }
       }
     }
@@ -137,8 +131,9 @@ abstract class MetadataIndexBase implements MetadataIndex {
     MetadataGroupImpl old = this.groups.put(key, group);
     if (old != null && !old.getMetadata().equals(g)) {
       LOG.warn("Duplicate group " + g.getName() + " in " + getSource() + ", ignored");
+    } else {
+      putIntoNameIndex(key, group);
     }
-    this.propertiesAndGroupsNameIndex.put(key.toString(), group);
   }
 
 
@@ -178,5 +173,22 @@ abstract class MetadataIndexBase implements MetadataIndex {
         LOG.warn("Invalid property " + p.getName() + " in " + source + ", skipped", e);
       }
     });
+  }
+
+
+  private void putIntoNameIndex(PropertyName key, MetadataItem value) {
+    if (key.isEmpty()) {
+      throw new IllegalArgumentException("Empty key is not acceptable");
+    }
+    this.propertiesAndGroupsNameIndex.addChild(key, value);
+  }
+
+
+  private void putIntoNameIndex(PropertyName key, MetadataItem newItem, MetadataItem oldItem) {
+    NameTreeNode child = this.propertiesAndGroupsNameIndex.findChild(key);
+    assert child != null;
+    boolean removed = child.getData().remove(oldItem);
+    assert removed;
+    child.getData().add(newItem);
   }
 }

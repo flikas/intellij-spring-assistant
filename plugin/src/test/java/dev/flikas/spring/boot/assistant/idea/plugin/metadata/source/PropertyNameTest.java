@@ -111,6 +111,12 @@ class PropertyNameTest {
 
     assertEquals("spring.tomcat.trust-all[*].name", name.subName(0).toString());
     assertEquals("", name.subName(5).toString());
+
+    name = PropertyName.of("discovery.instances[*][#]");
+    PropertyName sub = name.subName(2);
+    assertEquals("[*][#]", sub.toString());
+    assertTrue(sub.isIndexed(0));
+    assertTrue(sub.isAnyNonNumericIndex(0));
   }
 
 
@@ -169,7 +175,7 @@ class PropertyNameTest {
 
   @Test
   void testEquals() {
-    assertNotEquals(PropertyName.of("spring.kafka.admin.ssl.key-store-location"),
+    assertEquals(PropertyName.of("spring.kafka.admin.ssl.key-store-location"),
         PropertyName.of("spring.kafka.admin.ssl.keystore-location"));
 
     assertEquals(PropertyName.of("spring.instance[2].name"), PropertyName.of("spring.instance[#].name"));
@@ -183,6 +189,8 @@ class PropertyNameTest {
     assertNotEquals(PropertyName.of("spring.instance[*].name"), PropertyName.of("spring.instance[1].name"));
     assertNotEquals(PropertyName.of("spring.instance[#].name"), PropertyName.of("spring.instance[a].name"));
 
+    assertEquals(PropertyName.of("[*]"), PropertyName.of("any-string"));
+    assertEquals(PropertyName.of("[#]"), PropertyName.of("[7]"));
   }
 
 

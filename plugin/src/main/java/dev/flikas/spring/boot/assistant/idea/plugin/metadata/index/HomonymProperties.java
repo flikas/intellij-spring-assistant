@@ -9,15 +9,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class AlloProperties extends AbstractMap<String, MetadataProperty> implements MetadataProperty {
-  private static final Logger LOG = Logger.getInstance(AlloProperties.class);
+/**
+ * Aggregate properties which have the same name.
+ */
+public class HomonymProperties extends AbstractMap<String, MetadataProperty> implements MetadataProperty {
+  private static final Logger LOG = Logger.getInstance(HomonymProperties.class);
 
   private final ConcurrentMap<String, MetadataProperty> items = new ConcurrentHashMap<>();
   @Delegate
   private MetadataProperty mainProperty;
 
 
-  public AlloProperties(String source, MetadataProperty property) {
+  public HomonymProperties(String source, MetadataProperty property) {
     add(source, property);
   }
 
@@ -29,9 +32,9 @@ public class AlloProperties extends AbstractMap<String, MetadataProperty> implem
 
 
   public void add(@NotNull String source, MetadataProperty property) {
-    MetadataProperty current = items.putIfAbsent(property.getName(), property);
+    MetadataProperty current = items.putIfAbsent(property.getNameStr(), property);
     if (current != null && !current.equals(property)) {
-      LOG.warn("Duplicate property " + property.getName() + " in " + source + ", ignored");
+      LOG.warn("Duplicate property " + property.getNameStr() + " in " + source + ", ignored");
     } else if (current == null) {
       if (this.mainProperty == null) {
         this.mainProperty = property;
@@ -39,8 +42,8 @@ public class AlloProperties extends AbstractMap<String, MetadataProperty> implem
           && property.getMetadata().getDeprecation() == null) {
         this.mainProperty = property;
       } else if (property.getMetadata().getDeprecation() == null) {
-        LOG.warn("Duplicate property '" + property.getName() + "' & '"
-            + this.mainProperty.getName() + "' in " + source + ", ignored");
+        LOG.warn("Duplicate property '" + property.getNameStr() + "' & '"
+            + this.mainProperty.getNameStr() + "' in " + source + ", ignored");
       }
     }
   }
@@ -53,7 +56,7 @@ public class AlloProperties extends AbstractMap<String, MetadataProperty> implem
   }
 
 
-  public AlloProperties merge(String source, AlloProperties properties) {
+  public HomonymProperties merge(String source, HomonymProperties properties) {
     addAll(source, properties.values());
     return this;
   }

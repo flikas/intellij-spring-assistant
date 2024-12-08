@@ -6,7 +6,6 @@ import dev.flikas.spring.boot.assistant.idea.plugin.misc.MutableReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +29,7 @@ public class AggregatedMetadataIndex implements MetadataIndex {
 
 
   public void addFirst(MetadataIndex index) {
-    this.indexes.addFirst(MutableReference.immutable(index));
+    addFirst(MutableReference.immutable(index));
   }
 
 
@@ -40,7 +39,7 @@ public class AggregatedMetadataIndex implements MetadataIndex {
 
 
   public void addLast(MetadataIndex index) {
-    this.indexes.addLast(MutableReference.immutable(index));
+    addLast(MutableReference.immutable(index));
   }
 
 
@@ -137,10 +136,12 @@ public class AggregatedMetadataIndex implements MetadataIndex {
 
 
   @Override
-  public @NotNull Collection<MetadataItem> findPropertyOrGroupByPrefix(String prefix) {
+  public @Nullable NameTreeNode findInNameTrie(String prefix) {
     return getIndexStream()
-        .flatMap(index -> index.findPropertyOrGroupByPrefix(prefix).stream())
-        .collect(Collectors.toSet());
+        .map(index -> index.findInNameTrie(prefix))
+        .filter(Objects::nonNull)
+        .reduce(NameTreeNode::merge)
+        .orElse(null);
   }
 
 

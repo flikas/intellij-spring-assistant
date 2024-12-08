@@ -17,35 +17,40 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
-import java.util.Collections;
-import java.util.List;
-
 public class YamlDocumentationTargetProvider implements PsiDocumentationTargetProvider {
   @Override
-  public @NotNull List<@NotNull DocumentationTarget> documentationTargets(
+  public @Nullable DocumentationTarget documentationTarget(
       @NotNull PsiElement element, @Nullable PsiElement originalElement
   ) {
+    if (element instanceof MetadataItemVirtualElement mve) {
+      return getDocumentationTarget(mve.getMetadataItem());
+    }
     if (originalElement != null) element = originalElement;
     if (!PsiElementUtils.isInFileOfType(element, SpringBootConfigurationYamlFileType.INSTANCE)) {
-      return Collections.emptyList();
+      return null;
     }
     Module module = PsiCustomUtil.findModule(element);
     if (module == null) {
-      return Collections.emptyList();
+      return null;
     }
     // Find context YAMLKeyValue, stop if context is not at the same line.
     YAMLKeyValue keyValue = PsiTreeUtil.getContextOfType(element, false, YAMLKeyValue.class);
-    if (keyValue == null) return Collections.emptyList();
-    if (!YAMLUtil.psiAreAtTheSameLine(element, keyValue)) return Collections.emptyList();
+    if (keyValue == null) return null;
+    if (!YAMLUtil.psiAreAtTheSameLine(element, keyValue)) return null;
 
     String propertyName = YAMLUtil.getConfigFullName(keyValue);
     ModuleMetadataService service = module.getService(ModuleMetadataService.class);
     @Nullable MetadataItem propertyOrGroup = service.getIndex().getPropertyOrGroup(propertyName);
-    if (propertyOrGroup == null) return Collections.emptyList();
+    if (propertyOrGroup == null) return null;
 
+    return getDocumentationTarget(propertyOrGroup);
+  }
+
+
+  private static @NotNull DocumentationTarget getDocumentationTarget(@NotNull MetadataItem propertyOrGroup) {
     return switch (propertyOrGroup) {
-      case MetadataProperty property -> List.of(new PropertyDocumentationTarget(property));
-      case MetadataGroup group -> List.of(new GroupDocumentationTarget(group));
+      case MetadataProperty property -> new PropertyDocumentationTarget(property);
+      case MetadataGroup group -> new GroupDocumentationTarget(group);
       default -> throw new IllegalStateException("Unsupported type: " + propertyOrGroup.getClass());
     };
   }

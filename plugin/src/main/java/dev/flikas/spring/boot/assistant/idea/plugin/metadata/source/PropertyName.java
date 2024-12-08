@@ -157,6 +157,16 @@ public class PropertyName extends ConfigurationPropertyName {
   }
 
 
+  public boolean isAnyNumericIndex(int elementIndex) {
+    return isIndexed(elementIndex) && elements.get(elementIndex).equals("#");
+  }
+
+
+  public boolean isAnyNonNumericIndex(int elementIndex) {
+    return isIndexed(elementIndex) && elements.get(elementIndex).equals("*");
+  }
+
+
   @Override
   protected int compare(String e1, ElementType type1, String e2, ElementType type2) {
     if (e1 != null && e2 != null

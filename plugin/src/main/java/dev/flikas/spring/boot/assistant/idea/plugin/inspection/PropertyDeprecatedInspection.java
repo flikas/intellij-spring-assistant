@@ -23,7 +23,7 @@ public class PropertyDeprecatedInspection extends PropertyDeprecatedInspectionBa
       assert keyValue.getKey() != null;
       holder.registerProblem(
           keyValue.getKey(),
-          "Property \"" + property.getName() + "\" is deprecated."
+          "Property \"" + property.getNameStr() + "\" is deprecated."
       );
     }
   }

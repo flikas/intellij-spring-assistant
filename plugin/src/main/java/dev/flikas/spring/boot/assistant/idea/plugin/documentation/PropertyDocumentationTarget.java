@@ -17,9 +17,11 @@ import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataPrope
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata.Property.Deprecation;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiElementUtils;
 import in.oneton.idea.spring.assistant.plugin.misc.GenericUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -61,8 +63,11 @@ public class PropertyDocumentationTarget implements ProjectDocumentationTarget {
         .map(f -> ProjectFileIndex.getInstance(project).getOrderEntriesForFile(f))
         .map(l -> l.stream().map(OrderEntry::getPresentableName).distinct().collect(Collectors.joining(", ")))
         .orElse(null);
-    return TargetPresentation.builder(property.getName()).icon(AllIcons.Nodes.Property)
-        .containerText(property.getMetadata().getSourceType()).locationText(locationText, AllIcons.Nodes.Library)
+
+    return TargetPresentation.builder(property.getNameStr())
+        .icon(property.getIcon().getSecond())
+        .containerText(property.getMetadata().getSourceType())
+        .locationText(locationText, AllIcons.Nodes.Library)
         .presentation();
   }
 
@@ -88,8 +93,10 @@ public class PropertyDocumentationTarget implements ProjectDocumentationTarget {
       GenericUtil.updateClassNameAsJavadocHtml(typeHtml, propertyType.get().getCanonicalText());
       def = def.addRaw(typeHtml.toString()).child(HtmlChunk.br());
     }
-    def = def.child(HtmlChunk.icon("AllIcons.Nodes.Property", AllIcons.Nodes.Property)).child(HtmlChunk.nbsp())
-        .addText(property.getName());
+    Pair<String, Icon> icon = property.getIcon();
+    def = def.child(HtmlChunk.icon(icon.getFirst(), icon.getSecond()))
+        .child(HtmlChunk.nbsp())
+        .addText(property.getNameStr());
     Object defaultValue = property.getMetadata().getDefaultValue();
     if (defaultValue != null) {
       def = def.addText(" = ").addText(String.valueOf(defaultValue));

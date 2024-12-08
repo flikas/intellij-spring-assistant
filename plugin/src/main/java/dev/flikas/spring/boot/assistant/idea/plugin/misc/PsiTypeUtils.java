@@ -63,7 +63,8 @@ public class PsiTypeUtils {
   /**
    * @return true if type can be converted from a single String.
    */
-  public static boolean isValueType(PsiType type) {
+  public static boolean isValueType(@Nullable PsiType type) {
+    if (type == null) return false;
     // From Spring 'org.springframework.boot.convert.ApplicationConversionService'
     return ReadAction.compute(() -> isPhysical(type)
         && (TypeConversionUtil.isAssignableFromPrimitiveWrapper(type)

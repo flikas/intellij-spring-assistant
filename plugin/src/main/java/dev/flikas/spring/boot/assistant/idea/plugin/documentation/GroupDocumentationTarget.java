@@ -18,10 +18,12 @@ import com.intellij.psi.PsiJvmMember;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataGroup;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiElementUtils;
+import kotlin.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,13 +34,6 @@ import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELE
 public class GroupDocumentationTarget implements ProjectDocumentationTarget {
   private final MetadataGroup group;
   private final @NotNull Project project;
-
-
-//  public static GroupDocumentationTarget[] createTargets(MetadataGroup group) {
-//    //Unfortunately, even though there is a 'description' field for the group metadata, `spring boot configuration processor` will never fill it.
-//    //So, it is better to use group type's document instead.
-//    return new GroupDocumentationTarget[]{new FromSource(group), new FromMeta(group)};
-//  }
 
 
   public GroupDocumentationTarget(MetadataGroup group) {
@@ -63,45 +58,12 @@ public class GroupDocumentationTarget implements ProjectDocumentationTarget {
         .map(l -> l.stream().map(OrderEntry::getPresentableName).distinct().collect(Collectors.joining(", ")))
         .orElse(null);
     OrderEntry a;
-    return TargetPresentation.builder(group.getName())
-        .icon(AllIcons.FileTypes.SourceMap)
+    return TargetPresentation.builder(group.getNameStr())
+        .icon(group.getIcon().getSecond())
         .containerText(group.getMetadata().getSourceType())
         .locationText(locationText, AllIcons.Nodes.Library)
         .presentation();
   }
-
-
-/*  public static class FromSource extends GroupDocumentationTarget {
-    public FromSource(MetadataGroup group) {
-      super(group);
-    }
-
-
-    @Override
-    public @NotNull Pointer<? extends DocumentationTarget> createPointer() {
-      return Pointer.delegatingPointer(Pointer.hardPointer(super.group), FromSource::new);
-    }
-
-
-    @SuppressWarnings("removal")
-    @Override
-    public @Nullable DocumentationResult computeDocumentation() {
-      StringBuilder doc = new StringBuilder();
-      super.group.getSourceMethod()
-          .<PsiElement>map(m -> m)
-          .or(super.group::getSourceType)
-          .ifPresent(e -> doc.append(DocumentationManager.getProviderFromElement(e).generateDoc(e, null)));
-      if (doc.isEmpty()) return null;
-      return DocumentationResult.documentation(doc.toString());
-    }
-  }*/
-
-
-//  public static class FromMeta extends GroupDocumentationTarget {
-
-//    public FromMeta(MetadataGroup group) {
-//      super(group);
-//    }
 
 
   @Override
@@ -126,10 +88,11 @@ public class GroupDocumentationTarget implements ProjectDocumentationTarget {
     if (type.isPresent()) {
       def = def.addRaw(PsiElementUtils.createLinkForDoc(type.get())).addText("\n");
     }
+    Pair<String, Icon> icon = group.getIcon();
     def = def.children(
-        HtmlChunk.icon("AllIcons.FileTypes.SourceMap", AllIcons.FileTypes.SourceMap),
+        HtmlChunk.icon(icon.getFirst(), icon.getSecond()),
         HtmlChunk.nbsp(),
-        HtmlChunk.text(group.getName()));
+        HtmlChunk.text(group.getNameStr()));
     doc.append(def);
 
     doc.append(CONTENT_ELEMENT.addRaw(group.getRenderedDescription()));

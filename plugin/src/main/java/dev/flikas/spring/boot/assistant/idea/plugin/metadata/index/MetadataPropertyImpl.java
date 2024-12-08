@@ -1,5 +1,6 @@
 package dev.flikas.spring.boot.assistant.idea.plugin.metadata.index;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -14,6 +15,7 @@ import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.Configuratio
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.PropertyName;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiElementUtils;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiTypeUtils;
+import kotlin.Pair;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -21,6 +23,7 @@ import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Optional;
 
 import static dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationPropertyName.Form.DASHED;
@@ -58,7 +61,7 @@ class MetadataPropertyImpl implements MetadataProperty {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getNameStr() {
     return propertyName.toString();
   }
 
@@ -74,6 +77,14 @@ class MetadataPropertyImpl implements MetadataProperty {
     return Optional.ofNullable(metadata.getSourceType())
         .filter(StringUtils::isNotBlank)
         .map(type -> PsiTypeUtils.findClass(index.getProject(), type));
+  }
+
+
+  @Override
+  public @NotNull Pair<String, Icon> getIcon() {
+    return getType().filter(PsiClass::isEnum).isPresent()
+        ? new Pair<>("AllIcons.Nodes.Enum", AllIcons.Nodes.Enum)
+        : new Pair<>("AllIcons.Nodes.Property", AllIcons.Nodes.Property);
   }
 
 

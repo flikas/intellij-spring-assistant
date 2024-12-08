@@ -32,7 +32,7 @@ class MetadataGroupImpl implements MetadataGroup {
 
 
   @Override
-  public @NotNull String getName() {
+  public @NotNull String getNameStr() {
     return metadata.getName();
   }
 

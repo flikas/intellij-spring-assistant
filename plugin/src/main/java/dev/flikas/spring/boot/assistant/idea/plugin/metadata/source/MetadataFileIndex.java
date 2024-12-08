@@ -90,7 +90,13 @@ public class MetadataFileIndex extends ScalarIndexExtension<String> {
         return false;
       }
       VirtualFile parent = file.getParent();
-      return parent != null && parent.getName().equals(META_FILE_DIR);
+      if (parent == null || !parent.getName().equals(META_FILE_DIR)) {
+        return false;
+      }
+      // If the 'spring-configuration-metadata.json' is generated, 'additional-spring-configuration-metadata.json' will
+      // be merged into it. But 'additional-spring-configuration-metadata.json' should be load in case of the
+      // 'spring-configuration-metadata.json' is not generated, i.e., there is no `@ConfigurationProperties` annotated class.
+      return !name.equals(ADDITIONAL_METADATA_FILE_NAME) || parent.findChild(METADATA_FILE_NAME) == null;
     };
   }
 
