@@ -58,10 +58,10 @@
 
   <!-- Optional dependency on another plugin.
        If the plugin with the "com.MySecondPlugin" ID is installed, the contents of mysecondplugin.xml
-       (the format of this file conforms to the format of plugin.xml) will be loaded. -->
+       (the format of this file conforms to the format of plugin.xml) will be loaded.
   <depends config-file="META-INF/maven.xml" optional="true">org.jetbrains.idea.maven</depends>
   <depends config-file="META-INF/gradle.xml" optional="true">com.intellij.gradle</depends>
-
+   -->
   <incompatible-with>com.intellij.spring</incompatible-with>
   <incompatible-with>com.intellij.spring.boot</incompatible-with>
 
@@ -88,9 +88,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlValidity -->
     <postStartupActivity
-        implementation="in.oneton.idea.spring.assistant.plugin.suggestion.component.BootstrapImpl"/>
-    <!--suppress PluginXmlValidity -->
-    <postStartupActivity
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.Bootstrapper"/>
     <indexedRootsProvider
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndexConfigurator"/>
@@ -115,12 +112,6 @@
     <platform.backend.documentation.linkHandler
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.documentation.ProjectDocumentationLinkHandler"/>
 
-    <projectService
-        serviceInterface="in.oneton.idea.spring.assistant.plugin.suggestion.service.ProjectSuggestionService"
-        serviceImplementation="in.oneton.idea.spring.assistant.plugin.suggestion.service.ProjectSuggestionServiceImpl"/>
-    <moduleService
-        serviceInterface="in.oneton.idea.spring.assistant.plugin.suggestion.service.SuggestionService"
-        serviceImplementation="in.oneton.idea.spring.assistant.plugin.suggestion.service.SuggestionServiceImpl"/>
     <moduleService
         serviceInterface="dev.flikas.spring.boot.assistant.idea.plugin.metadata.service.ModuleMetadataService"
         serviceImplementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.service.ModuleMetadataServiceImpl"/>

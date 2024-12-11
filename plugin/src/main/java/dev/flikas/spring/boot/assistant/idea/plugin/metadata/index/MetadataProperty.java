@@ -5,6 +5,7 @@ import com.intellij.psi.PsiType;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -29,9 +30,25 @@ public interface MetadataProperty extends MetadataItem {
   Optional<MetadataHint> getHint();
 
   /**
+   * get available values for this property.
+   * <p>
+   * if this property is Map, get available values for map values.
+   * <p>
+   * if there is no hint, return empty list.
+   */
+  @NotNull List<PropertyHintValue> getHintValues();
+
+  /**
    * get key hint for this property if it is a Map.
    */
   Optional<MetadataHint> getKeyHint();
+
+  /**
+   * get available values for this map property's keys.
+   * <p>
+   * if there is no hint, return empty list.
+   */
+  @NotNull List<PropertyHintValue> getKeyHintValues();
 
   /**
    * @return whether the specified key can be bound to this property.

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaParserFacade;
 import com.intellij.psi.PsiMethod;
@@ -22,8 +23,11 @@ import lombok.Getter;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationPropertyName.Form.DASHED;
@@ -164,8 +168,46 @@ class MetadataPropertyImpl implements MetadataProperty {
 
 
   @Override
+  public @NotNull List<PropertyHintValue> getHintValues() {
+    final List<PropertyHintValue> resultList = new ArrayList<>();
+    getHint().ifPresentOrElse(hint -> {
+      ConfigurationMetadata.Hint.ValueHint[] values = hint.getMetadata().getValues();
+      if (values != null) {
+        for (ConfigurationMetadata.Hint.ValueHint value : values) {
+          PropertyHintValue hv = new PropertyHintValue(String.valueOf(value.getValue()));
+          hv.setDescription(value.getDescription());
+          hv.setOneLineDescription(getFirstLine(value.getDescription()));
+          hv.setIcon(AllIcons.Nodes.Field);
+          resultList.add(hv);
+        }
+      }
+      //TODO Hint providers
+    }, () -> {
+      Optional<PsiClass> propType = getType();
+      if (propType.filter(PsiClass::isEnum).isPresent()) {
+        for (PsiField field : propType.get().getFields()) {
+          if (field instanceof PsiEnumConstant) {
+            PropertyHintValue hv = new PropertyHintValue(field.getName());
+            hv.setPsiElement(field);
+            resultList.add(hv);
+          }
+        }
+      }
+    });
+
+    return resultList;
+  }
+
+
+  @Override
   public Optional<MetadataHint> getKeyHint() {
     return Optional.ofNullable(index.getHints().get(propertyName.append("keys")));
+  }
+
+
+  @Override
+  public @NotNull List<PropertyHintValue> getKeyHintValues() {
+    return List.of();
   }
 
 
@@ -181,5 +223,23 @@ class MetadataPropertyImpl implements MetadataProperty {
 
   private String getCamelCaseLastName() {
     return PropertyName.toCamelCase(propertyName.getLastElement(DASHED));
+  }
+
+
+  private String getFirstLine(@Nullable String paragraph) {
+    if (paragraph == null) return null;
+    int dot = paragraph.indexOf('.');
+    int ls = paragraph.indexOf('\n');
+    int end;
+    if (dot > 0 && ls > 0) {
+      end = Math.min(dot, ls);
+    } else if (dot > 0) {
+      end = dot;
+    } else if (ls > 0) {
+      end = ls;
+    } else {
+      return paragraph;
+    }
+    return paragraph.substring(0, end);
   }
 }

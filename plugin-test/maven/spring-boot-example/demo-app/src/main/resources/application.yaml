@@ -138,7 +138,15 @@ spring:
             - oo
         opaquetoken:
           client-id: j
-          client-secret: yaho
+          client-secret: y
+  jpa:
+    hibernate:
+      ddl-auto: 'create-drop'
+  data:
+    cassandra:
+      request:
+        throttler:
+          type: RATE_LIMITING
 ---
 oo:
   b: c

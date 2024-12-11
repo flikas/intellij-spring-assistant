@@ -24,7 +24,10 @@ public class YamlDocumentationTargetProvider implements PsiDocumentationTargetPr
   ) {
     if (element instanceof MetadataItemVirtualElement mve) {
       return getDocumentationTarget(mve.getMetadataItem());
+    } else if (element instanceof HintDocumentationVirtualElement hdve) {
+      return hdve;
     }
+
     if (originalElement != null) element = originalElement;
     if (!PsiElementUtils.isInFileOfType(element, SpringBootConfigurationYamlFileType.INSTANCE)) {
       return null;

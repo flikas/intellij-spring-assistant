@@ -11,7 +11,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.AggregatedMetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataItem;
+import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataProperty;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.NameTreeNode;
+import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.PropertyHintValue;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.PropertyName;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -53,7 +55,7 @@ final class ModuleMetadataServiceImpl implements ModuleMetadataService {
 
 
   @Override
-  public @NotNull Collection<MetadataItem> findSuggestionForCompletion(
+  public @NotNull Collection<MetadataItem> findSuggestionForKey(
       @Nullable String parentName, String queryString) {
     if (parentName == null) parentName = "";
     NameTreeNode searchRoot = getIndex().findInNameTrie(parentName.trim());
@@ -93,6 +95,15 @@ final class ModuleMetadataServiceImpl implements ModuleMetadataService {
           .collect(Collectors.toSet());
     }
     return result;
+  }
+
+
+  @Override
+  public @NotNull Collection<PropertyHintValue> findSuggestionForValue(
+      @NotNull String propertyName, String queryString) {
+    MetadataProperty property = getIndex().getProperty(propertyName);
+    if (property == null) return Collections.emptySet();
+    return property.getHintValues();
   }
 
 

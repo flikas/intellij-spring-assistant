@@ -5,6 +5,7 @@ import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataGroup
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataIndex;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataItem;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataProperty;
+import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.PropertyHintValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,11 +18,20 @@ public interface ModuleMetadataService {
   @NotNull MetadataIndex getIndex();
 
   /**
-   * Retrieve candidates for completion.
+   * Retrieve candidates for configuration key completion.
    *
    * @param parentName  The context property name for querying, must be existed, such as 'spring.security', can be null or empty
-   * @param queryString The user input for completion,
+   * @param queryString The user input for completion.
    * @return Collection of {@link MetadataProperty} or {@link MetadataGroup} that matches the query.
    */
-  @NotNull Collection<MetadataItem> findSuggestionForCompletion(@Nullable String parentName, String queryString);
+  @NotNull Collection<MetadataItem> findSuggestionForKey(@Nullable String parentName, String queryString);
+
+  /**
+   * Retrieve candidates for property value completion.
+   *
+   * @param propertyName The context property name for querying value, must be existed.
+   * @param queryString  The user input for completion.
+   * @return Collection of values that matches the query.
+   */
+  @NotNull Collection<PropertyHintValue> findSuggestionForValue(@NotNull String propertyName, String queryString);
 }

@@ -28,6 +28,7 @@ import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
+import static dev.flikas.spring.boot.assistant.idea.plugin.completion.YamlValueInsertHandler.unescapeValue;
 import static in.oneton.idea.spring.assistant.plugin.misc.GenericUtil.dotDelimitedOriginalNames;
 import static in.oneton.idea.spring.assistant.plugin.misc.GenericUtil.sanitise;
 import static in.oneton.idea.spring.assistant.plugin.misc.PsiCustomUtil.computeDocumentation;
@@ -35,7 +36,6 @@ import static in.oneton.idea.spring.assistant.plugin.misc.PsiCustomUtil.isValidT
 import static in.oneton.idea.spring.assistant.plugin.misc.PsiCustomUtil.toClassNonQualifiedName;
 import static in.oneton.idea.spring.assistant.plugin.misc.PsiCustomUtil.toValidPsiClass;
 import static in.oneton.idea.spring.assistant.plugin.suggestion.SuggestionNodeType.ENUM;
-import static in.oneton.idea.spring.assistant.plugin.suggestion.handler.YamlValueInsertHandler.unescapeValue;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;

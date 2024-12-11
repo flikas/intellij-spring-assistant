@@ -38,7 +38,11 @@ import static in.oneton.idea.spring.assistant.plugin.misc.GenericUtil.getOverall
 import static java.util.Objects.requireNonNull;
 
 public class YamlKeyInsertHandler implements InsertHandler<LookupElement> {
+  public static final YamlKeyInsertHandler INSTANCE = new YamlKeyInsertHandler();
   private static final String CARET = "<caret>";
+
+
+  private YamlKeyInsertHandler() {}
 
 
   @Override
