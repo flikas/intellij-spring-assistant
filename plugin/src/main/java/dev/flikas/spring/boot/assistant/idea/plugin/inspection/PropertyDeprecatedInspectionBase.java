@@ -29,7 +29,7 @@ public abstract class PropertyDeprecatedInspectionBase extends YamlInspectionBas
 
     if (yamlValue instanceof YAMLMapping
         && !property.getFullType().map(t -> PsiTypeUtils.isMap(module.getProject(), t)).orElse(false)) {
-      // Property exists, its value in YAML is a mapping, but the property's type is not a Map: this may happen on
+      // Property isValid, its value in YAML is a mapping, but the property's type is not a Map: this may happen on
       // property deprecation, for example, "spring.profiles" & "spring.profiles.active/group/include/...".
       // If it happens, we should only prompt deprecation while the actual value type coincides with the property's type.
       return;

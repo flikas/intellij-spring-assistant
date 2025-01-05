@@ -11,7 +11,7 @@ public class MetadataItemVirtualElement extends LightElement {
 
 
   public MetadataItemVirtualElement(@NotNull MetadataItem metadataItem) {
-    super(PsiManager.getInstance(metadataItem.getIndex().getProject()), Language.ANY);
+    super(PsiManager.getInstance(metadataItem.getIndex().project()), Language.ANY);
     this.metadataItem = metadataItem;
   }
 

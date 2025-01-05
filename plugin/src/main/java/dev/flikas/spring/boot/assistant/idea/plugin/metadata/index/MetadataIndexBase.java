@@ -34,7 +34,7 @@ abstract class MetadataIndexBase implements MetadataIndex {
 
 
   @Override
-  public @NotNull Project getProject() {
+  public @NotNull Project project() {
     return project;
   }
 
@@ -112,11 +112,11 @@ abstract class MetadataIndexBase implements MetadataIndex {
     putIntoNameIndex(key, prop);
     if (old != null) {
       if (old instanceof HomonymProperties allo) {
-        allo.add(getSource(), prop);
+        allo.add(getSource().toString(), prop);
       } else {
         if (!old.getMetadata().equals(p)) {
-          HomonymProperties allo = new HomonymProperties(getSource(), old);
-          allo.add(getSource(), prop);
+          HomonymProperties allo = new HomonymProperties(getSource().toString(), old);
+          allo.add(getSource().toString(), prop);
           this.properties.put(key, allo);
           putIntoNameIndex(key, allo, old);
         }

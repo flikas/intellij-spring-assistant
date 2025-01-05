@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Deque;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -48,6 +50,19 @@ public class AggregatedMetadataIndex implements MetadataIndex {
   }
 
 
+  /**
+   * Refresh all indexes, remove ones that the source file is removed, reload ones that the source file is changed.
+   */
+  public void refresh() {
+    Iterator<MutableReference<? extends MetadataIndex>> iterator = this.indexes.iterator();
+    while (iterator.hasNext()) {
+      MutableReference<? extends MetadataIndex> ref = iterator.next();
+      ref.refresh();
+      if (ref.dereference() == null) iterator.remove();
+    }
+  }
+
+
   @Override
   public boolean isEmpty() {
     return getIndexStream().allMatch(MetadataIndex::isEmpty);
@@ -55,8 +70,8 @@ public class AggregatedMetadataIndex implements MetadataIndex {
 
 
   @Override
-  public @NotNull Project getProject() {
-    return getIndexStream().map(MetadataIndex::getProject).reduce((p1, p2) -> {
+  public @NotNull Project project() {
+    return getIndexStream().map(MetadataIndex::project).reduce((p1, p2) -> {
       if (p1 == p2) {
         return p1;
       } else {
@@ -67,8 +82,11 @@ public class AggregatedMetadataIndex implements MetadataIndex {
 
 
   @Override
-  public @NotNull String getSource() {
-    return getIndexStream().map(MetadataIndex::getSource).collect(Collectors.joining(",", "Aggregated{", "}"));
+  public @NotNull List<MetadataSource> getSource() {
+    return getIndexStream()
+        .map(MetadataIndex::getSource)
+        .flatMap(List::stream)
+        .toList();
   }
 
 

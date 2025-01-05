@@ -44,7 +44,7 @@ class MetadataGroupImpl implements MetadataGroup {
   public Optional<PsiClass> getType() {
     return Optional.ofNullable(metadata.getType())
         .filter(StringUtils::isNotBlank)
-        .map(type -> PsiTypeUtils.findClass(index.getProject(), type));
+        .map(type -> PsiTypeUtils.findClass(index.project(), type));
   }
 
 
@@ -55,7 +55,7 @@ class MetadataGroupImpl implements MetadataGroup {
   public Optional<PsiClass> getSourceType() {
     return Optional.ofNullable(metadata.getSourceType())
         .filter(StringUtils::isNotBlank)
-        .map(type -> PsiTypeUtils.findClass(index.getProject(), type));
+        .map(type -> PsiTypeUtils.findClass(index.project(), type));
   }
 
 

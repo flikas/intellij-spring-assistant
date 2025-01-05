@@ -154,14 +154,14 @@ example:
   server:
     address:
     port: 8080
-    value1: 123
+    value: 123
 my:
   keys1:
     - foo
     - bar
   jobs:
     key:
-      name12: 12
+      name: 12
     aab:
       cron: xxf
       undefined: xx

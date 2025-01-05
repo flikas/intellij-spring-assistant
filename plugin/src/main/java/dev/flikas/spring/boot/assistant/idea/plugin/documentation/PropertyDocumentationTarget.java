@@ -41,7 +41,7 @@ public class PropertyDocumentationTarget implements ProjectDocumentationTarget {
 
   public PropertyDocumentationTarget(MetadataProperty property) {
     this.property = property;
-    this.project = property.getIndex().getProject();
+    this.project = property.getIndex().project();
   }
 
 

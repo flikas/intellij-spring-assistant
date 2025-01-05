@@ -16,5 +16,5 @@ public class LombokPojo {
     /**
      * ֵ
      */
-    private String value1;
+    private String value;
 }

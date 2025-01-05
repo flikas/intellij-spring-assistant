@@ -52,7 +52,7 @@ class MetadataPropertyImpl implements MetadataProperty {
     if (StringUtils.isBlank(metadata.getType())) {
       this.propertyType = null;
     } else {
-      PsiJavaParserFacade parser = JavaPsiFacade.getInstance(index.getProject()).getParserFacade();
+      PsiJavaParserFacade parser = JavaPsiFacade.getInstance(index.project()).getParserFacade();
       // When reference an inner class, we should use A.B not A$B but spring does.
       String typeString = metadata.getType().replace('$', '.');
       this.propertyType = ReadAction.compute(() -> {
@@ -80,7 +80,7 @@ class MetadataPropertyImpl implements MetadataProperty {
   public Optional<PsiClass> getSourceType() {
     return Optional.ofNullable(metadata.getSourceType())
         .filter(StringUtils::isNotBlank)
-        .map(type -> PsiTypeUtils.findClass(index.getProject(), type));
+        .map(type -> PsiTypeUtils.findClass(index.project(), type));
   }
 
 
@@ -214,10 +214,11 @@ class MetadataPropertyImpl implements MetadataProperty {
   @Override
   public boolean canBind(@NotNull String key) {
     PropertyName keyName = PropertyName.adapt(key);
+    PsiType myType = getFullType().orElse(null);
     return this.propertyName.equals(keyName)
         // A Map property can bind all sub-key-values.
-        || this.propertyName.isAncestorOf(keyName) && PsiTypeUtils.isValueMap(index.getProject(),
-        getFullType().orElse(null));
+        || this.propertyName.isAncestorOf(keyName) && PsiTypeUtils.isValueMap(index.project(), myType)
+        || this.propertyName.isParentOf(keyName) && PsiTypeUtils.isMap(index.project(), myType);
   }
 
 

@@ -45,8 +45,8 @@ public final class PsiToYamlKeyReferenceService {
 
   public PsiToYamlKeyReferenceService(Project project) {
     this.project = project;
-
-    DumbService.getInstance(project).runReadActionInSmartMode(this::reindex);
+    //FIXME refresh index while the yaml file changed or added or removed.
+    //TODO Use platform index mechanism instead.
   }
 
 
@@ -61,8 +61,9 @@ public final class PsiToYamlKeyReferenceService {
 
   private synchronized void reindex() {
     Map<String, Set<YamlKeyToNullReference>> index = new HashMap<>();
-    Collection<VirtualFile> files = FileTypeIndex.getFiles(
-        SpringBootConfigurationYamlFileType.INSTANCE, GlobalSearchScope.projectScope(project));
+    Collection<VirtualFile> files = DumbService.getInstance(project)
+        .runReadActionInSmartMode(() -> FileTypeIndex.getFiles(
+            SpringBootConfigurationYamlFileType.INSTANCE, GlobalSearchScope.projectScope(project)));
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : files) {
       if (!file.isValid()) continue;

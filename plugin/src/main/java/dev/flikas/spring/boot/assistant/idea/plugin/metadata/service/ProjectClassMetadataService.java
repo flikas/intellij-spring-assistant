@@ -129,7 +129,7 @@ final class ProjectClassMetadataService implements Disposable {
           generateMetadata(index, name, propertyType);
         }
       }
-      index.addLast(new ConfigurationMetadataIndex(project, getCanonicalTextOfType(type), metadata));
+      index.addLast(new ConfigurationMetadataIndex(metadata, valueClass, project));
     }
     return index;
   }

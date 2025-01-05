@@ -38,7 +38,7 @@ public class GroupDocumentationTarget implements ProjectDocumentationTarget {
 
   public GroupDocumentationTarget(MetadataGroup group) {
     this.group = group;
-    this.project = group.getIndex().getProject();
+    this.project = group.getIndex().project();
   }
 
 

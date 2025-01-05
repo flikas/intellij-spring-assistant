@@ -44,7 +44,24 @@ public class MetadataFileIndex extends ScalarIndexExtension<String> {
   }
 
 
+  public static boolean maybeMetaFile(VirtualFile file) {
+    String name = file.getName();
+    if (!name.equals(METADATA_FILE_NAME) && !name.equals(ADDITIONAL_METADATA_FILE_NAME)) {
+      return false;
+    }
+    VirtualFile parent = file.getParent();
+    if (parent == null || !parent.getName().equals(META_FILE_DIR)) {
+      return false;
+    }
+    // If the 'spring-configuration-metadata.json' is generated, 'additional-spring-configuration-metadata.json' will
+    // be merged into it. But 'additional-spring-configuration-metadata.json' should be load in case of the
+    // 'spring-configuration-metadata.json' is not generated, i.e., there is no `@ConfigurationProperties` annotated class.
+    return !name.equals(ADDITIONAL_METADATA_FILE_NAME) || parent.findChild(METADATA_FILE_NAME) == null;
+  }
+
+
   public static boolean isMetaFile(@NotNull VirtualFile file, @NotNull Project project) {
+    if (!file.isValid()) return false;
     String name = file.getName();
     if (!name.equals(METADATA_FILE_NAME) && !name.equals(ADDITIONAL_METADATA_FILE_NAME)) {
       return false;
@@ -62,6 +79,16 @@ public class MetadataFileIndex extends ScalarIndexExtension<String> {
     }
     String relPath = VfsUtilCore.getRelativePath(file, classRoot);
     return relPath != null && (relPath.equals(METADATA_FILE) || relPath.equals(ADDITIONAL_METADATA_FILE));
+  }
+
+
+  @Nullable
+  public static VirtualFile findMetaFileInClassRoot(@NotNull VirtualFile classRoot) {
+    VirtualFile f = classRoot.findFileByRelativePath(METADATA_FILE);
+    if (f != null) {
+      return f;
+    }
+    return classRoot.findFileByRelativePath(ADDITIONAL_METADATA_FILE);
   }
 
 
@@ -84,20 +111,7 @@ public class MetadataFileIndex extends ScalarIndexExtension<String> {
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return file -> {
-      String name = file.getName();
-      if (!name.equals(METADATA_FILE_NAME) && !name.equals(ADDITIONAL_METADATA_FILE_NAME)) {
-        return false;
-      }
-      VirtualFile parent = file.getParent();
-      if (parent == null || !parent.getName().equals(META_FILE_DIR)) {
-        return false;
-      }
-      // If the 'spring-configuration-metadata.json' is generated, 'additional-spring-configuration-metadata.json' will
-      // be merged into it. But 'additional-spring-configuration-metadata.json' should be load in case of the
-      // 'spring-configuration-metadata.json' is not generated, i.e., there is no `@ConfigurationProperties` annotated class.
-      return !name.equals(ADDITIONAL_METADATA_FILE_NAME) || parent.findChild(METADATA_FILE_NAME) == null;
-    };
+    return MetadataFileIndex::maybeMetaFile;
   }
 
 

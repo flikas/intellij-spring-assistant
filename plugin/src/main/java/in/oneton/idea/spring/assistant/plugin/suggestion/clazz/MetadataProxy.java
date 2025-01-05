@@ -17,7 +17,7 @@ import java.util.SortedSet;
 
 /**
  * Since the class documentation is tied to the actual class being available in the classpath of the target project the plugin is operating on,
- * it is possible that the target class is no longer available in the classpath due to change of dependencies. So, lets always access target via the proxy so that we dont have to worry about whether the target class exists in classpath or not
+ * it is possible that the target class is no longer available in the classpath due to change of dependencies. So, lets always access target via the proxy so that we dont have to worry about whether the target class isValid in classpath or not
  */
 public interface MetadataProxy {
 
