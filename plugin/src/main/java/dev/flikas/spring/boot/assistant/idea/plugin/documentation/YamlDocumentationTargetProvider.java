@@ -11,11 +11,12 @@ import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataItem;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataProperty;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.service.ModuleMetadataService;
 import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiElementUtils;
-import in.oneton.idea.spring.assistant.plugin.misc.PsiCustomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+
+import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
 
 public class YamlDocumentationTargetProvider implements PsiDocumentationTargetProvider {
   @Override
@@ -32,7 +33,7 @@ public class YamlDocumentationTargetProvider implements PsiDocumentationTargetPr
     if (!PsiElementUtils.isInFileOfType(element, SpringBootConfigurationYamlFileType.INSTANCE)) {
       return null;
     }
-    Module module = PsiCustomUtil.findModule(element);
+    Module module = findModuleForPsiElement(element);
     if (module == null) {
       return null;
     }

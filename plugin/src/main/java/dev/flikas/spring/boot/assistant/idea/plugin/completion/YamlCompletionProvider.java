@@ -42,7 +42,7 @@ import java.util.Collection;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER;
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
-import static in.oneton.idea.spring.assistant.plugin.misc.PsiCustomUtil.findModule;
+import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
 
 class YamlCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
@@ -59,7 +59,7 @@ class YamlCompletionProvider extends CompletionProvider<CompletionParameters> {
     if (ReadAction.compute(() -> DumbService.isDumb(project))) {
       return;
     }
-    Module module = findModule(element);
+    Module module = findModuleForPsiElement(element);
     if (module == null) {
       return;
     }

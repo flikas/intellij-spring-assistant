@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import in.oneton.idea.spring.assistant.plugin.suggestion.SuggestionNode;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLLanguage;
@@ -41,8 +40,6 @@ public class GenericUtil {
       Pattern.compile("[a-zA-Z_][a-zA-Z_0-9]*\\.");
   private static final Pattern GENERIC_SECTION_REMOVAL_PATTERN =
       Pattern.compile("<(?<commaDelimitedTypes>[^>]+)>");
-  //  private static final Pattern CLASSNAME_MATCH_PATTERN =
-  //      Pattern.compile("([a-zA-Z_][a-zA-Z_0-9]*(?:\\.[a-zA-Z_][a-zA-Z_0-9]*)*)");
 
   private static final Pattern methodToFragmentConverter = Pattern.compile("(.+)\\.(.+)\\(.*\\)");
 
@@ -235,51 +232,6 @@ public class GenericUtil {
       return matcher.replaceAll("");
     }
     return type;
-  }
-
-
-  public static String dotDelimitedOriginalNames(
-      List<? extends SuggestionNode> matchesTopFirstTillParentNode, SuggestionNode currentNode
-  ) {
-    StringBuilder builder = new StringBuilder();
-
-    for (SuggestionNode aMatchesTopFirstTillParentNode : matchesTopFirstTillParentNode) {
-      String originalName = aMatchesTopFirstTillParentNode.getOriginalName();
-      if (originalName != null) {
-        builder.append(originalName).append(".");
-      }
-    }
-
-    String originalName = currentNode.getOriginalName();
-    if (originalName != null) {
-      builder.append(originalName);
-    }
-    return builder.toString();
-  }
-
-
-  public static String dotDelimitedOriginalNames(List<? extends SuggestionNode> matches) {
-    return dotDelimitedOriginalNames(matches, 0);
-  }
-
-
-  public static String dotDelimitedOriginalNames(
-      List<? extends SuggestionNode> matches,
-      int startIndex
-  ) {
-    StringBuilder builder = new StringBuilder();
-
-    for (int i = startIndex; i < matches.size(); i++) {
-      String originalName = matches.get(i).getOriginalName();
-      if (originalName != null) {
-        builder.append(originalName);
-        boolean appendDot = i < matches.size() - 1;
-        if (appendDot) {
-          builder.append(".");
-        }
-      }
-    }
-    return builder.toString();
   }
 
 
