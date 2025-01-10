@@ -42,7 +42,7 @@ class CompilationListener implements CompilationStatusListener {
         .filter(Objects::nonNull)
         .toList();
     //The index recreates too late, we have to find the generated metadata files without the index.
-    new Task.Backgroundable(project, "Reload spring configuration metadata") {
+    new Task.Backgroundable(project, "Reloading spring configuration metadata") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<VirtualFile> newMetaFiles = affected.stream()

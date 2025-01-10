@@ -52,7 +52,7 @@ class ModuleDependenciesWatcher implements WorkspaceModelChangeListener {
             if (module == null) continue;
             @Nullable ModuleMetadataService svc = module.getServiceIfCreated(ModuleMetadataService.class);
             if (svc instanceof ModuleMetadataServiceImpl impl) {
-              indicator.setText2("For module " + module.getName());
+              indicator.setText2(module.getName());
               impl.refreshMetadata();
               indicator.setText2("");
             }

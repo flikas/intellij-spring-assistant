@@ -43,9 +43,9 @@ public class PsiTypeUtils {
 
   @Nullable
   public static PsiClass findClass(Project project, String sourceType) {
-    return JavaPsiFacade
-        .getInstance(project)
-        .findClass(sourceType.trim().replace('$', '.'), GlobalSearchScope.allScope(project));
+    JavaPsiFacade jpf = JavaPsiFacade.getInstance(project);
+    return ReadAction.compute(() ->
+        jpf.findClass(sourceType.trim().replace('$', '.'), GlobalSearchScope.allScope(project)));
   }
 
 

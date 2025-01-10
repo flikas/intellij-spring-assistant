@@ -1,5 +1,6 @@
 package dev.flikas.spring.boot.assistant.idea.plugin.navigation;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -9,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
-public class YamlKeyToNullReference extends PsiReferenceBase<YamlKeyToNullReference.YamlKeyIdentifier> implements Comparable<YamlKeyToNullReference> {
+public class YamlKeyToNullReference extends PsiReferenceBase<YamlKeyToNullReference.YamlKeyIdentifier>
+    implements Comparable<YamlKeyToNullReference> {
   @NotNull
   private final YAMLKeyValue yamlKeyValue;
 
@@ -17,12 +19,6 @@ public class YamlKeyToNullReference extends PsiReferenceBase<YamlKeyToNullRefere
   public YamlKeyToNullReference(@NotNull YAMLKeyValue yamlKeyValue) {
     super(new YamlKeyIdentifier(yamlKeyValue), getTextRange(yamlKeyValue), true);
     this.yamlKeyValue = yamlKeyValue;
-  }
-
-
-  private static TextRange getTextRange(YAMLKeyValue yamlKeyValue) {
-    PsiElement key = yamlKeyValue.getKey();
-    return key != null ? key.getTextRangeInParent() : TextRange.from(0, yamlKeyValue.getTextLength());
   }
 
 
@@ -59,6 +55,12 @@ public class YamlKeyToNullReference extends PsiReferenceBase<YamlKeyToNullRefere
   }
 
 
+  private static TextRange getTextRange(YAMLKeyValue yamlKeyValue) {
+    PsiElement key = yamlKeyValue.getKey();
+    return key != null ? key.getTextRangeInParent() : TextRange.from(0, yamlKeyValue.getTextLength());
+  }
+
+
   /**
    * For {@linkplain com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector JavaReadWriteAccessDetector}
    * detect YamlKeyValue correctly to a writer.
@@ -68,7 +70,7 @@ public class YamlKeyToNullReference extends PsiReferenceBase<YamlKeyToNullRefere
 
 
     public YamlKeyIdentifier(YAMLKeyValue kv) {
-      super(kv.getManager(), kv.getText());
+      super(kv.getManager(), ReadAction.compute(kv::getText));
       this.myElement = kv;
     }
 

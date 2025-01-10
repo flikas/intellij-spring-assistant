@@ -156,7 +156,7 @@ class MetadataPropertyImpl implements MetadataProperty {
 
   @Override
   public Optional<PsiField> getSourceField() {
-    return getSourceType().map(type -> type.findFieldByName(getCamelCaseLastName(), true));
+    return getSourceType().map(type -> ReadAction.compute(() -> type.findFieldByName(getCamelCaseLastName(), true)));
   }
 
 

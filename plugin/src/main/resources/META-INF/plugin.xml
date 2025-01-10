@@ -87,8 +87,6 @@
        added to the extension point. -->
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlValidity -->
-    <postStartupActivity
-        implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.Bootstrapper"/>
     <indexedRootsProvider
         implementation="dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.MetadataFileIndexConfigurator"/>
     <fileBasedIndex
