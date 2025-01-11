@@ -1,153 +1,17 @@
-# Inspection::KeyNotDefined(negative)
-an-undefined-key: 1
-resilience4j:
-  circuitbreaker:
-    instances:
-      "backendA":
-        # Inspection::KeyNotDefined(negative, Map<String, POJO>)
-        undefined: null
-        # Inspection::KeyNotDefined(positive, Map<String, POJO>)
-        allowHealthIndicatorToFail: false
-server:
-  compression:
-    enabled: true
-  servlet:
-    encoding:
-      "mapping":
-        # Inspection::KeyNotDefined(positive, Map<Non-String-Key, Non-String-Value>), Inspection::InvalidValue(positive)
-        "zh-CN": "UTF-8"
-        # Inspection::InvalidValue(negative)
-        "en-US": "ASCII1"
-  jetty:
-    # Inspection::InvalidValue(negative)
-    connection-idle-timeout: abcd
-    accesslog:
-      # Inspection::InvalidValue(positive), Inspection::KeyNotDefined(positive, List<String>)
-      ignore-paths:
-        - p1
-        - p2
-        - p3
-  # Inspection::Deprecated_Unsupported(negative)
-  use-forward-headers: true
-  tomcat:
-    # Inspection::InvalidValue(positive)
-    accept-count: 1
-    # Inspection::InvalidValue(positive)
-    connection-timeout: 3m
-    threads:
-      # Inspection::InvalidValue(positive)
-      max: ${spring.cloud-version}
-    accesslog:
-      # Inspection::InvalidValue(positive)
-      buffered: false
-
+# Completion test
 spring:
-  # Inspection::KeyNotDefined(negative)
-  undefined: 2
-  # Inspection::Deprecated(positive)
-  profiles:
-    # Inspection::KeyNotDefined(positive), Inspection::InvalidValue(positive)
-    active: dev
-    # Inspection::InvalidValue(positive)
-    include:
-      - test
-      # Inspection::InvalidValue(negative), Inspection::KeyNotDefined(negative)
-      - invalid-key: invalid-value
-  datasource:
-    hikari:
-      data-source-properties:
-        # Inspection::KeyNotDefined(positive), Inspection::InvalidValue(positive)
-        any-property: should-be-valid
-  jpa:
-    hibernate:
-      naming:
-        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
-    properties:
-      hibernate:
-        archive:
-          # Inspection::KeyNotDefined(positive), Inspection::InvalidValue(positive)
-          scanner: org.hibernate.boot.archive.scan.internal.StandardScanner
-  application:
-    index: 2
-    # Inspection::InvalidValue(negative)
-    name:
-      - name1
-      - name2
-  cloud:
-    loadbalancer:
-      clients:
-        a:
-          healthCheck:
-            initialDelay: 90
-    circuitbreaker:
-      resilience4j:
-        enabled: true
-    discovery:
-      client:
-        simple.instances:
-          a:
-            - port: 1
-              host: 127.0.0.1
-            - host: 127.0.0.1
-              serviceId: service
-              port: 12
-          b:
-            - host: 127.0.0.1
-              port: 12
-          c:
-            - host: 123
-              # Inspection::KeyNotDefined(negative, Map<String, List<POJO>>)
-              undefined: xxy
-  activemq:
-    packages:
-      trust-all: false
-  artemis:
-    embedded:
-      data-directory:
-
-
+  jpa.hibernate:
+    # Completion: hint-values
+    ddl-auto: 'create-drop'
+  data.cassandra.request.throttler:
+    # Completion: enum
+    type: RATE_LIMITING
 logging:
-  pattern:
-    # Inspection::Deprecated(negative)
-    rolling-file-name: "xx"
-  group:
-    abb:
-      - xx
-      - yy
-    zzcs:
-      - ab
-  charset:
-    console: utf-8
-  # Inspection::InvalidValue(negative)
-  level: xyzdef
-  logback:
-    rollingpolicy:
-      # Inspection::InvalidValue(negative)
-      max-file-size: 100M
+  level:
+    root: info
+    org.springframework: debug
 ---
-spring:
-  # Inspection::Deprecated(negative)
-  profiles:
-    - abc
-  security:
-    filter.order: 1
-    oauth2:
-      resourceserver:
-        jwt:
-          audiences:
-            - oo
-        opaquetoken:
-          client-id: j
-          client-secret: y
-  jpa:
-    hibernate:
-      ddl-auto: 'create-drop'
-  data:
-    cassandra:
-      request:
-        throttler:
-          type: RATE_LIMITING
----
+# In project metadata
 oo:
   b: c
 example:
@@ -161,20 +25,77 @@ my:
     - bar
   jobs:
     key:
-      name: 12
-    aab:
-      cron: xxf
-      undefined: xx
-  client:
-    - client1
-    - "client2"
-  longString: |
-    abcidosie
-    sjigoes
-    jsdfiwoeige
-  longString2: >-
-    jsaidfoei
-    sdjfoiwe
-    sjfoeiwreow
-      
-
+      name: 12  # Needs Lombok plugin, key from Map<String, POJO>
+      cron: xxf # Needs Lombok plugin, key from Map<String, POJO>
+---
+# Inspection:KeyNotDefined(positive)
+logging.level:
+  # hint: enum
+  root: debug
+  # hint: logger-name
+  org.your-company: info
+resilience4j.circuitbreaker.instances:
+  "backendA":
+    # In Type: Map<String, POJO>
+    allowHealthIndicatorToFail: false
+server:
+  servlet.encoding:
+    "mapping":
+      # In Type: Map<Non-String-Key, Non-String-Value>
+      "en-US": "UTF-8"
+  # For Type: List<String>
+  jetty.accesslog.ignore-paths:
+    - p1
+    - p2
+    - p3
+spring:
+  profiles:
+    # Pure key
+    active: dev
+  datasource.hikari.data-source-properties:
+    # For Type: java.util.Properties
+    any-property: should-be-valid
+  # For Type: java.util.Properties, can map any depth of keys
+  jpa.properties:
+    hibernate:
+      archive:
+        # Inspection::KeyNotDefined(positive)
+        scanner: org.hibernate.boot.archive.scan.internal.StandardScanner
+---
+#Inspection::InvalidValue(positive)
+# Type: Charset
+logging.charset.console: utf-8
+server:
+  # Type: List<String>
+  jetty.accesslog.ignore-paths:
+    - p1
+    - p2
+    - p3
+  tomcat:
+    # Type: int
+    accept-count: 1
+    # Type: Duration
+    connection-timeout: 3m
+    # variable substitute
+    threads.max: ${spring.cloud-version}
+    access-log:
+      # Type: boolean
+      buffered: false
+spring:
+  profiles:
+    # Type: List<String> -- String
+    active: dev
+  # Type: java.util.Properties
+  datasource.hikari.data-source-properties:
+    any-property: should-be-valid
+  # Type: Map<String, String> -- any depth of keys
+  jpa.properties:
+    hibernate:
+      archive:
+        scanner: org.hibernate.boot.archive.scan.internal.StandardScanner
+---
+# Inspection::Deprecated(positive)
+# Deprecated property but available sub-property
+spring:
+  profiles:
+    active: dev

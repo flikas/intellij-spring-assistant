@@ -1,0 +1,52 @@
+# Inspection::KeyNotDefined(negative)
+an-undefined-key: 1
+# Inspection::KeyNotDefined(negative)
+spring:
+  undefined: 2
+  profiles.include:
+    # Inspection::InvalidValue(negative), Inspection::KeyNotDefined(negative)
+    - invalid-key: 9
+  cloud.discovery.client.simple.instances:
+    c:
+      # Inspection::KeyNotDefined(negative, Map<String, List<POJO>>)
+      - undefined: xxy
+resilience4j.circuitbreaker.instances:
+  "backendA":
+    # Inspection::KeyNotDefined(negative, Map<String, POJO>)
+    undefined: null
+---
+spring:
+  application:
+    # Inspection::InvalidValue(negative)
+    name:
+      - name1
+      - name2
+server:
+  servlet:
+    encoding:
+      "mapping":
+        # Inspection::InvalidValue(negative)
+        "en-US": "ASCII2"
+  jetty:
+    # Inspection::InvalidValue(negative)
+    connection-idle-timeout: abcd
+logging:
+  # Inspection::InvalidValue(negative)
+  level: xxys
+  logback:
+    rolling-policy:
+      # Inspection::InvalidValue(negative)
+      max-file-size: 100M
+---
+spring:
+  # Inspection::Deprecated(negative)
+  profiles:
+    - abc
+logging:
+  pattern:
+    # Inspection::Deprecated(negative)
+    rolling-file-name: "xx"
+server:
+  # Inspection::Deprecated_Unsupported(negative)
+  use-forward-headers: true
+
