@@ -3,6 +3,7 @@ package dev.flikas.spring.boot.assistant.idea.plugin.metadata.index;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata;
+import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -54,6 +55,10 @@ public interface MetadataProperty extends MetadataItem {
    * @return whether the specified key can be bound to this property.
    */
   boolean canBind(@NotNull String key);
+
+  default boolean isMapType() {
+    return getFullType().filter(p -> PsiTypeUtils.isMap(getIndex().project(), p)).isPresent();
+  }
 
   ConfigurationMetadata.Property getMetadata();
 }

@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.index.MetadataProperty;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.service.ModuleMetadataService;
 import dev.flikas.spring.boot.assistant.idea.plugin.metadata.source.ConfigurationMetadata.Property.Deprecation;
-import dev.flikas.spring.boot.assistant.idea.plugin.misc.PsiTypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLAlias;
@@ -27,8 +26,7 @@ public abstract class PropertyDeprecatedInspectionBase extends YamlInspectionBas
     MetadataProperty property = service.getIndex().getProperty(propertyName);
     if (property == null) return;
 
-    if (yamlValue instanceof YAMLMapping
-        && !property.getFullType().map(t -> PsiTypeUtils.isMap(module.getProject(), t)).orElse(false)) {
+    if (yamlValue instanceof YAMLMapping && !property.isMapType()) {
       // Property isValid, its value in YAML is a mapping, but the property's type is not a Map: this may happen on
       // property deprecation, for example, "spring.profiles" & "spring.profiles.active/group/include/...".
       // If it happens, we should only prompt deprecation while the actual value type coincides with the property's type.

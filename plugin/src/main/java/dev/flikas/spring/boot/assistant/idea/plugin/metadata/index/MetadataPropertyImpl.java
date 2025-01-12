@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -170,19 +171,7 @@ class MetadataPropertyImpl implements MetadataProperty {
   @Override
   public @NotNull List<PropertyHintValue> getHintValues() {
     final List<PropertyHintValue> resultList = new ArrayList<>();
-    getHint().ifPresentOrElse(hint -> {
-      ConfigurationMetadata.Hint.ValueHint[] values = hint.getMetadata().getValues();
-      if (values != null) {
-        for (ConfigurationMetadata.Hint.ValueHint value : values) {
-          PropertyHintValue hv = new PropertyHintValue(String.valueOf(value.getValue()));
-          hv.setDescription(value.getDescription());
-          hv.setOneLineDescription(getFirstLine(value.getDescription()));
-          hv.setIcon(AllIcons.Nodes.Field);
-          resultList.add(hv);
-        }
-      }
-      //TODO Hint providers
-    }, () -> {
+    getHint().ifPresentOrElse(hint -> resultList.addAll(getHintValues(hint)), () -> {
       Optional<PsiClass> propType = getType();
       if (propType.filter(PsiClass::isEnum).isPresent()) {
         for (PsiField field : propType.get().getFields()) {
@@ -199,6 +188,23 @@ class MetadataPropertyImpl implements MetadataProperty {
   }
 
 
+  private List<PropertyHintValue> getHintValues(MetadataHint hint) {
+    List<PropertyHintValue> resultList = new ArrayList<>();
+    ConfigurationMetadata.Hint.ValueHint[] values = hint.getMetadata().getValues();
+    if (values != null) {
+      for (ConfigurationMetadata.Hint.ValueHint value : values) {
+        PropertyHintValue hv = new PropertyHintValue(String.valueOf(value.getValue()));
+        hv.setDescription(value.getDescription());
+        hv.setOneLineDescription(getFirstLine(value.getDescription()));
+        hv.setIcon(AllIcons.Nodes.Field);
+        resultList.add(hv);
+      }
+    }
+    //TODO Hint providers
+    return resultList;
+  }
+
+
   @Override
   public Optional<MetadataHint> getKeyHint() {
     return Optional.ofNullable(index.getHints().get(propertyName.append("keys")));
@@ -207,7 +213,7 @@ class MetadataPropertyImpl implements MetadataProperty {
 
   @Override
   public @NotNull List<PropertyHintValue> getKeyHintValues() {
-    return List.of();
+    return getKeyHint().map(this::getHintValues).orElseGet(Collections::emptyList);
   }
 
 
